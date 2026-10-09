@@ -1,4 +1,7 @@
-import { timelineGenerator } from "@/domain/engine/timelineGenerator";
+import {
+  timelineGenerator,
+  generateEventId,
+} from "@/domain/engine/timelineGenerator";
 import {
   Baseline,
   Bill,
@@ -7,7 +10,6 @@ import {
   oneOffExpense,
   TimelineEvent,
 } from "@/domain/types/forecast";
-import { createHash } from "crypto";
 
 describe("Test timeline generator", () => {
   it("should accurately generate the timeline of events", () => {
@@ -94,9 +96,7 @@ describe("Test timeline generator", () => {
     );
     const expectedResult: TimelineEvent[] = [
       {
-        id: createHash("sha256")
-          .update(`${new Date("2026-02-18")}-${3000.54}-${"salary"}`)
-          .digest("hex"),
+        id: generateEventId(`${new Date("2026-02-18")}-${3000.54}-${"salary"}`),
         timestamp: new Date("2026-02-18"),
         type: "inflow",
         label: "Salary",
@@ -107,9 +107,7 @@ describe("Test timeline generator", () => {
         headroom: 2945.54,
       },
       {
-        id: createHash("sha256")
-          .update(`${"housesupport"}-${new Date("2026-02-18")}-${3000.54}`)
-          .digest("hex"),
+        id: generateEventId(`${"housesupport"}-${new Date("2026-02-18")}-${3000.54}`),
         timestamp: new Date("2026-02-18"),
         type: "commitment",
         label: "house support",
@@ -121,9 +119,7 @@ describe("Test timeline generator", () => {
         headroom: 2645.54,
       },
       {
-        id: createHash("sha256")
-          .update(`${"health"}-${new Date("2026-02-18")}-${3000.54}`)
-          .digest("hex"),
+        id: generateEventId(`${"health"}-${new Date("2026-02-18")}-${3000.54}`),
         timestamp: new Date("2026-02-18"),
         type: "baseline",
         label: "Health",
@@ -134,9 +130,7 @@ describe("Test timeline generator", () => {
         headroom: 2345.54,
       },
       {
-        id: createHash("sha256")
-          .update(`${"savings"}-${new Date("2026-02-18")}-${3000.54}`)
-          .digest("hex"),
+        id: generateEventId(`${"savings"}-${new Date("2026-02-18")}-${3000.54}`),
         timestamp: new Date("2026-02-18"),
         type: "baseline",
         label: "Savings",
@@ -147,9 +141,7 @@ describe("Test timeline generator", () => {
         headroom: 1845.54,
       },
       {
-        id: createHash("sha256")
-          .update(`${"loan"}-${new Date("2026-02-18")}-${3000.54}`)
-          .digest("hex"),
+        id: generateEventId(`${"loan"}-${new Date("2026-02-18")}-${3000.54}`),
         timestamp: new Date("2026-02-18"),
         type: "commitment",
         label: "loan",
@@ -161,9 +153,7 @@ describe("Test timeline generator", () => {
         headroom: 1245.54,
       },
       {
-        id: createHash("sha256")
-          .update(`${new Date("2026-02-19")}-${690.45}-${"packagedsalary"}`)
-          .digest("hex"),
+        id: generateEventId(`${new Date("2026-02-19")}-${690.45}-${"packagedsalary"}`),
         timestamp: new Date("2026-02-19"),
         type: "inflow",
         label: "Packaged Salary",
@@ -174,9 +164,7 @@ describe("Test timeline generator", () => {
         headroom: 1935.99,
       },
       {
-        id: createHash("sha256")
-          .update(`${"housesupport"}-${new Date("2026-02-19")}-${690.45}`)
-          .digest("hex"),
+        id: generateEventId(`${"housesupport"}-${new Date("2026-02-19")}-${690.45}`),
         timestamp: new Date("2026-02-19"),
         type: "commitment",
         label: "house support",
@@ -188,9 +176,7 @@ describe("Test timeline generator", () => {
         headroom: 1635.99,
       },
       {
-        id: createHash("sha256")
-          .update(`${"health"}-${new Date("2026-02-19")}-${690.45}`)
-          .digest("hex"),
+        id: generateEventId(`${"health"}-${new Date("2026-02-19")}-${690.45}`),
         timestamp: new Date("2026-02-19"),
         type: "baseline",
         label: "Health",
@@ -201,9 +187,7 @@ describe("Test timeline generator", () => {
         headroom: 1335.99,
       },
       {
-        id: createHash("sha256")
-          .update(`${"savings"}-${new Date("2026-02-19")}-${690.45}`)
-          .digest("hex"),
+        id: generateEventId(`${"savings"}-${new Date("2026-02-19")}-${690.45}`),
         timestamp: new Date("2026-02-19"),
         type: "baseline",
         label: "Savings",
@@ -214,9 +198,7 @@ describe("Test timeline generator", () => {
         headroom: 835.99,
       },
       {
-        id: createHash("sha256")
-          .update(`${"loan"}-${new Date("2026-02-19")}-${690.45}`)
-          .digest("hex"),
+        id: generateEventId(`${"loan"}-${new Date("2026-02-19")}-${690.45}`),
         timestamp: new Date("2026-02-19"),
         type: "commitment",
         label: "loan",
@@ -228,9 +210,7 @@ describe("Test timeline generator", () => {
         headroom: 235.99,
       },
       {
-        id: createHash("sha256")
-          .update(`${new Date("2026-02-25")}-${1500}-${"carrepair"}`)
-          .digest("hex"),
+        id: generateEventId(`${new Date("2026-02-25")}-${1500}-${"carrepair"}`),
         timestamp: new Date("2026-02-25"),
         type: "expense",
         label: "Car repair",
@@ -241,9 +221,7 @@ describe("Test timeline generator", () => {
         headroom: 0,
       },
       {
-        id: createHash("sha256")
-          .update(`${new Date("2026-02-27")}-${34.78}-${"myfitnesspassport"}`)
-          .digest("hex"),
+        id: generateEventId(`${new Date("2026-02-27")}-${34.78}-${"myfitnesspassport"}`),
         timestamp: new Date("2026-02-27"),
         type: "bill",
         label: "My Fitness Passport",
@@ -254,9 +232,7 @@ describe("Test timeline generator", () => {
         headroom: 0,
       },
       {
-        id: createHash("sha256")
-          .update(`${new Date("2026-02-28")}-${162.76}-${"healthinsurance"}`)
-          .digest("hex"),
+        id: generateEventId(`${new Date("2026-02-28")}-${162.76}-${"healthinsurance"}`),
         timestamp: new Date("2026-02-28"),
         type: "bill",
         label: "Health Insurance",

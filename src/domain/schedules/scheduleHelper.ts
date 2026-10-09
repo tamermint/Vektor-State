@@ -1,4 +1,3 @@
-import "server-only";
 import { DateMappingError, ValidationError } from "@/lib/errors";
 import {
   Bill,
@@ -314,7 +313,8 @@ export function billsInWindow(
           `Bill at index ${index} has missing or invalid due date`,
         );
       }
-      return bill.dueDate >= windowStart && bill.dueDate < windowEnd;
+      const effectiveDate: Date = bill.deferredUntil ?? bill.dueDate;
+      return effectiveDate >= windowStart && effectiveDate < windowEnd;
     },
   );
 

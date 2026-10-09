@@ -528,6 +528,37 @@ describe("scheduleHelper", () => {
       expect(result.bills.length).toBe(0);
       expect(result.totalAmount).toBe(0);
     });
+
+    it("should use deferredUntil date when present instead of original dueDate", () => {
+      const windowAStart: Date = new Date("2026-01-15");
+      const windowAEnd: Date = new Date("2026-01-29");
+      const windowBStart: Date = new Date("2026-01-29");
+      const windowBEnd: Date = new Date("2026-02-12");
+
+      const bills: Bill[] = [
+        {
+          id: "1",
+          name: "Deferred Electricity Bill",
+          amount: 250,
+          dueDate: new Date("2026-01-20"), // originally in Window A
+          deferredUntil: new Date("2026-02-02"), // deferred into Window B
+          scheduleType: "monthly",
+          payRail: "Bank Account",
+          payType: "manual",
+        },
+      ];
+
+      // Window A should NOT include the deferred bill
+      const resultA = billsInWindow(bills, windowAStart, windowAEnd);
+      expect(resultA.bills).toHaveLength(0);
+      expect(resultA.totalAmount).toBe(0);
+
+      // Window B SHOULD include the deferred bill
+      const resultB = billsInWindow(bills, windowBStart, windowBEnd);
+      expect(resultB.bills).toHaveLength(1);
+      expect(resultB.totalAmount).toBe(250);
+      expect(resultB.bills[0].name).toBe("Deferred Electricity Bill");
+    });
   });
 
   describe("billsInWindow with FutureBill types", () => {

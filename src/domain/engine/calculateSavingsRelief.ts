@@ -1,4 +1,3 @@
-import "server-only";
 import { ValidationError } from "@/lib/errors";
 import { TimelineEvent } from "../types/forecast";
 import { SavingsRelief, ReliefAction } from "../types/forecast";
@@ -50,10 +49,11 @@ export function calculateSavingsRelief(
   //if the lowest running balance is equal to or greater than buffer, return an empty object
   if (minEventBalanceInCents >= bufferInCents) return null;
 
-  //this is how much is needed to recover from the min event
-  //so, if running balance in minEvent is -500, we need 550 to recover
+  // this is how much is needed to restore the buffer from the minimum event balance
+  // for minBalance = -$500 and buffer = $50 -> 50 - (-500) = $550
+  // for minBalance = +$20 and buffer = $50 -> 50 - 20 = $30
   const reliefGapInCents: number =
-    Math.abs(minEventBalanceInCents) + bufferInCents;
+    bufferInCents - minEventBalanceInCents;
 
   //get all commitments till the global min event
   const allSoftCommitmentEventsTillMinEvent: TimelineEvent[] =

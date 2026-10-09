@@ -1,4 +1,3 @@
-import "server-only";
 import {
   Baseline,
   Bill,
@@ -8,7 +7,27 @@ import {
   oneOffExpense,
   TimelineEvent,
 } from "../types/forecast";
-import { createHash } from "crypto";
+
+/**
+ * Fast, deterministic 64-bit string hash (pure JavaScript).
+ * Isomorphic across all JS environments (Browser, Node, Edge, Workers).
+ */
+export function generateEventId(input: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c64e6d;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0))
+    .toString(16)
+    .padStart(16, "0");
+}
 
 /**
  * @module domain/engine/timelineGenerator
@@ -19,7 +38,7 @@ import { createHash } from "crypto";
  * * ### Architectural Principles:
  * 1. **Savings First (Pay Yourself First):** Commitments and Baselines are programmatically anchored
  * to Inflow timestamps to ensure liquidity is reserved before any discretionary spending or bills.
- * 2. **Deterministic Hashing:** Every event ID is generated via SHA-256 using its content properties.
+ * 2. **Deterministic Hashing:** Every event ID is generated via a deterministic hash using its content properties.
  * This ensures that identical simulation runs yield identical IDs, enabling stable UI keys and
  * idempotent state updates.
  * 3. **Intra-Day Liquidity Sequencing:** Implements a strict sorting hierarchy (Inflow > Commitment > Baseline > Bill)
@@ -49,11 +68,9 @@ export function timelineGenerator(
   //First get the inflows and then immediately attach the baselines and commitment for the "Savings First" principle
   windowInflows.forEach((inflow) => {
     timelineEvents.push({
-      id: createHash("sha256")
-        .update(
-          `${inflow.date}-${inflow.amount}-${inflow.label.toLowerCase().replace(/\s+/g, "")}`,
-        )
-        .digest("hex"),
+      id: generateEventId(
+        `${inflow.date}-${inflow.amount}-${inflow.label.toLowerCase().replace(/\s+/g, "")}`,
+      ),
       timestamp: inflow.date,
       type: "inflow",
       label: inflow.label,
@@ -66,11 +83,9 @@ export function timelineGenerator(
 
     commitments.forEach((commitment) => {
       timelineEvents.push({
-        id: createHash("sha256")
-          .update(
-            `${commitment.commitmentType.toLowerCase().replace(/\s+/g, "")}-${inflow.date}-${inflow.amount}`,
-          )
-          .digest("hex"),
+        id: generateEventId(
+          `${commitment.commitmentType.toLowerCase().replace(/\s+/g, "")}-${inflow.date}-${inflow.amount}`,
+        ),
         timestamp: inflow.date,
         type: "commitment",
         label: commitment.commitmentType,
@@ -85,11 +100,9 @@ export function timelineGenerator(
 
     baselines.forEach((baseline) => {
       timelineEvents.push({
-        id: createHash("sha256")
-          .update(
-            `${baseline.name.toLowerCase().replace(/\s+/g, "")}-${inflow.date}-${inflow.amount}`,
-          )
-          .digest("hex"),
+        id: generateEventId(
+          `${baseline.name.toLowerCase().replace(/\s+/g, "")}-${inflow.date}-${inflow.amount}`,
+        ),
         timestamp: inflow.date,
         type: "baseline",
         label: baseline.name,
@@ -105,11 +118,9 @@ export function timelineGenerator(
   //Map the one off expenses
   expenses.forEach((expense) => {
     timelineEvents.push({
-      id: createHash("sha256")
-        .update(
-          `${expense.date}-${expense.amount}-${expense.name.toLowerCase().replace(/\s+/g, "")}`,
-        )
-        .digest("hex"),
+      id: generateEventId(
+        `${expense.date}-${expense.amount}-${expense.name.toLowerCase().replace(/\s+/g, "")}`,
+      ),
       timestamp: expense.date,
       type: "expense",
       label: expense.name,
@@ -125,11 +136,9 @@ export function timelineGenerator(
   windowBills.forEach((bill) => {
     const effectiveDate: Date = bill.deferredUntil || bill.dueDate;
     timelineEvents.push({
-      id: createHash("sha256")
-        .update(
-          `${bill.dueDate}-${bill.amount}-${bill.name.toLowerCase().replace(/\s+/g, "")}`,
-        )
-        .digest("hex"),
+      id: generateEventId(
+        `${bill.dueDate}-${bill.amount}-${bill.name.toLowerCase().replace(/\s+/g, "")}`,
+      ),
       timestamp: effectiveDate,
       type: "bill",
       label: bill.name,

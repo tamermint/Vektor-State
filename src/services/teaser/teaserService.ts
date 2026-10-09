@@ -1,20 +1,17 @@
 import { randomUUID } from "crypto";
-import { computeForecast } from "../engine/computeForecast";
-import { ForecastInput, ForecastOutput, TeaserInput } from "../types/forecast";
+import { computeForecast } from "@/domain/engine/computeForecast";
+import { ForecastInput, ForecastOutput, TeaserInput } from "@/domain/types/forecast";
 import { generateTeaserInsights } from "./teaserAIInsights";
 
 /**
- * @description The teaser service will call the computeForecast with a stripped down version of the forecast input
- * and utilize the forecast output to feed a smaller Gemini LLM model - gemini-3-flash to get a quick summary and advertise
- * the switch to the pro version for detailed insights.
- * @constraints Rate limit the API call to 10 per hour for guest/anonymous users
+ * @description The teaser service calls computeForecast with a stripped down synthetic input
+ * and feeds the forecast output to Gemini to provide a quick summary.
  */
-
 export async function forecastTeaser(input: TeaserInput) {
   const { monthlyIncome, totalMonthlyBills, currentBalance, targetSplurge } =
     input;
 
-  //Building a synthetic input
+  // Building synthetic input
   const synthInput: ForecastInput = {
     paySchedule: {
       id: randomUUID(),
@@ -57,7 +54,6 @@ export async function forecastTeaser(input: TeaserInput) {
   };
 
   const forecast: ForecastOutput = computeForecast(synthInput, new Date());
-
   const insights = await generateTeaserInsights(forecast);
 
   return {

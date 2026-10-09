@@ -30,7 +30,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-const providers: any[] = [Google];
+const providers: NextAuthConfig["providers"] = [Google];
 
 if (process.env.NEXT_PUBLIC_TEST_MODE === "true") {
   providers.push(

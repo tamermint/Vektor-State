@@ -539,4 +539,35 @@ describe("calculateSavingsRelief", () => {
       expect(result!.predictedBalance).toBe(expectedBalance);
     });
   });
+
+  describe("Positive balance below buffer", () => {
+    it("should accurately calculate relief gap when running balance is positive but below buffer", () => {
+      // User has minimum balance of +$20, buffer is $50.
+      // Expected gap is $30 ($50 - $20), NOT $70 ($20 + $50).
+      const events: TimelineEvent[] = [
+        createTimelineEvent({
+          id: "event-1",
+          type: "bill",
+          runningBalance: 20,
+          amount: -50,
+        }),
+        createTimelineEvent({
+          id: "event-2",
+          type: "commitment",
+          paymentConstraints: "soft",
+          runningBalance: 20,
+          amount: -100,
+          priority: 1,
+        }),
+      ];
+
+      const result = calculateSavingsRelief(events, 50);
+      expect(result).not.toBeNull();
+      expect(result!.totalReliefAmount).toBe(30);
+      expect(result!.predictedBalance).toBe(50);
+      expect(result!.isFullyResolved).toBe(true);
+      expect(result!.actions[0].amountUnlocked).toBe(30);
+      expect(result!.actions[0].remainingCommitment).toBe(70);
+    });
+  });
 });

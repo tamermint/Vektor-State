@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { TeaserInputSchema } from "@/domain/types/forecast";
 import { z } from "zod";
-import { forecastTeaser } from "@/domain/teaser/teaserService";
+import { forecastTeaser } from "@/services/teaser/teaserService";
 
 /**
  * @module api/teaser/route

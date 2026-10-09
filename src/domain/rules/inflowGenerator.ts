@@ -1,4 +1,3 @@
-import "server-only";
 import { DateMappingError, ValidationError } from "@/lib/errors";
 import { Inflow, PaySchedule } from "../types/forecast";
 import { nextUTCIntervalDate } from "../schedules/scheduleHelper";

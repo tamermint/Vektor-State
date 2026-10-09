@@ -64,10 +64,36 @@ describe("calculateDeferrals", () => {
       ).toThrow(ValidationError);
     });
 
-    test("1c. returns null when relief is null", () => {
+    test("1c. returns null when relief is null and timeline is healthy", () => {
       const timeline = [buildTimelineEvent({})];
       const result = calculateDeferrals(timeline, null, 100);
       expect(result).toBeNull();
+    });
+
+    test("1c2. evaluates deferrals when relief is null but a deficit exists", () => {
+      const timeline: TimelineEvent[] = [
+        buildBill({
+          id: "bill-1",
+          timestamp: new Date("2026-04-01"),
+          label: "Electricity",
+          amount: -200,
+          runningBalance: -100,
+          headroom: 0,
+        }),
+        buildTimelineEvent({
+          id: "income-2",
+          timestamp: new Date("2026-04-15"),
+          amount: 2000,
+          runningBalance: 1900,
+          headroom: 1800,
+        }),
+      ];
+      const result = calculateDeferrals(timeline, null, 100);
+      expect(result).not.toBeNull();
+      expect(result?.actions).toHaveLength(1);
+      expect(result?.actions[0].id).toBe("bill-1");
+      expect(result?.actions[0].date).toEqual(new Date("2026-04-15"));
+      expect(result?.isNowResolved).toBe(true);
     });
 
     test("1d. returns null when relief.isFullyResolved is true", () => {

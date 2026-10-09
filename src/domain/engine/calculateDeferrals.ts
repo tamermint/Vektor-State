@@ -1,4 +1,3 @@
-import "server-only";
 import {
   SuggestedDeferralAction,
   DeferralPlan,
@@ -47,30 +46,47 @@ export function calculateDeferrals(
     throw new ValidationError("There must be atleast one timeline event");
   }
 
-  //check if there are no relief objects or if its fully resolved
-  if (!relief || relief.isFullyResolved == true) return null;
+  // check if relief was provided and already fully resolved
+  if (relief?.isFullyResolved === true) return null;
 
-  //remaining gap needs to be after the amount in relief
-  let remainingGap: number = Math.abs(relief.predictedBalance) + buffer;
+  // find the event with the lowest running balance in the entire timeline
+  const minEvent: TimelineEvent = timelineEvents.reduce((min, e) =>
+    e.runningBalance < min.runningBalance ? e : min,
+  );
 
-  //filter and sort the timeline based on manual bills
+  // if there is no relief and the lowest balance is already at or above buffer, no deferrals needed
+  if (!relief && minEvent.runningBalance >= buffer) return null;
+
+  // target date up to which bills can be deferred
+  const targetDate: Date = relief ? relief.minBalanceDate : minEvent.timestamp;
+
+  // base balance before deferrals: post-relief predicted balance, or minimum running balance
+  const baseBalance: number = relief
+    ? relief.predictedBalance
+    : minEvent.runningBalance;
+
+  // remaining gap to restore balance to buffer
+  let remainingGap: number = Math.round((buffer - baseBalance) * 100) / 100;
+  if (remainingGap <= 0) return null;
+
+  // filter and sort the timeline based on manual bills up to targetDate
   const manualBills: TimelineEvent[] = timelineEvents
     .filter(
       (e) =>
         e.type === "bill" &&
         e.paymentConstraints === "soft" &&
-        e.timestamp <= relief.minBalanceDate,
+        e.timestamp <= targetDate,
     )
     .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   const suggestedDeferrals: SuggestedDeferralAction[] = [];
 
-  //create a map of headrooms
+  // create a map of headrooms
   const localHeadroomMap = new Map(
     timelineEvents.map((e) => [e.id, e.headroom]),
   );
 
-  //for each bill, get the safe landing event and then ensure that the headroom is consumed
+  // for each bill, get the safe landing event and then ensure that the headroom is consumed
   for (const bill of manualBills) {
     if (remainingGap <= 0) break;
 
@@ -91,14 +107,14 @@ export function calculateDeferrals(
         date: safeLandingEvent.timestamp,
       });
 
-      //consume the headroom
+      // consume the headroom
       const landingIndex: number = timelineEvents.indexOf(safeLandingEvent);
       for (let i = landingIndex; i < timelineEvents.length; i++) {
         const id = timelineEvents[i].id;
         const current = localHeadroomMap.get(id) || 0;
         localHeadroomMap.set(id, Math.max(0, current - billAmount));
       }
-      remainingGap -= Math.abs(bill.amount);
+      remainingGap = Math.round((remainingGap - billAmount) * 100) / 100;
     }
   }
 

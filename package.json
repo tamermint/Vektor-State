@@ -16,7 +16,6 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.67",
     "@auth/prisma-adapter": "^2.11.1",
-    "@google/genai": "^1.43.0",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@upstash/ratelimit": "^2.0.8",
