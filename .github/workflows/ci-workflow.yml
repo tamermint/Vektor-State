@@ -50,7 +50,7 @@ jobs:
 
       # Step 7: Generate Prisma Client
       - name: Generate Prisma Client
-        run: pnpm dlx prisma generate
+        run: pnpm exec prisma generate
 
       # Step 8: Lint - Quality gate check
       - name: Lint
