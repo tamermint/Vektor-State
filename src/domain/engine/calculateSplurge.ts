@@ -40,10 +40,10 @@ export function getSplurgeStatus(splurgeAmount: number): splurgeStatus {
     throw new ValidationError("Invalid splurge amount");
   }
 
-  // Define thresholds for financial health status
-  // These represent boundaries between spending confidence levels
-  const SPLRUGE_THRESHOLD_GREEN: number = 100;
-  const SPLRUGE_THRESHOLD_AMBER: number = 50;
+  // Define thresholds for financial health status (in cents)
+  // These represent boundaries between spending confidence levels ($100 = 10000, $50 = 5000)
+  const SPLRUGE_THRESHOLD_GREEN: number = 10000;
+  const SPLRUGE_THRESHOLD_AMBER: number = 5000;
 
   // Determine status based on splurge amount range
 

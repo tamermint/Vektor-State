@@ -22,7 +22,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000,
+          amount: 300000,
           date: new Date("2026-05-01T00:00:00.000Z"),
           label: "Salary",
         },
@@ -33,7 +33,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       {
         id: "101",
         name: "Rent",
-        amount: 2000,
+        amount: 200000,
         dueDate: new Date("2026-05-05T00:00:00.000Z"),
         scheduleType: "monthly",
         payRail: "BANK",
@@ -64,10 +64,10 @@ describe("computeForecast - Magic Month Scenario", () => {
      * - Inflow: May 15 ($3000)
      * - Final Balance: $4000
      */
-    expect(result.now.safeToSplurge).toBe(1000);
+    expect(result.now.safeToSplurge).toBe(100000);
     expect(result.now.breakdown.timeline).toHaveLength(2); // Inflow + Bill
 
-    expect(result.ifWait.safeToSplurge).toBe(4000);
+    expect(result.ifWait.safeToSplurge).toBe(400000);
     expect(result.ifWait.breakdown.allBills).toHaveLength(0); // No bills in 2nd fortnight
     expect(result.ifWait.breakdown.timeline[0].type).toBe("inflow");
   });
@@ -82,7 +82,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000,
+          amount: 300000,
           date: new Date("2026-05-01T00:00:00.000Z"), // Anchor in past
           label: "Salary",
         },
@@ -93,7 +93,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       {
         id: "101",
         name: "Rent",
-        amount: 2000,
+        amount: 200000,
         dueDate: new Date("2026-05-05T00:00:00.000Z"), // Already paid
         scheduleType: "monthly",
         payRail: "BANK",
@@ -120,7 +120,7 @@ describe("computeForecast - Magic Month Scenario", () => {
      */
     expect(result.now.breakdown.allBills).toHaveLength(0);
     expect(result.ifWait.breakdown.allBills).toHaveLength(0);
-    expect(result.ifWait.safeToSplurge).toBe(3000);
+    expect(result.ifWait.safeToSplurge).toBe(300000);
   });
 
   it("should correctly project a yearly bill anchor from 2025 into a 2026 window", async () => {
@@ -132,7 +132,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000,
+          amount: 300000,
           date: new Date("2026-05-01T00:00:00.000Z"),
           label: "Salary",
         },
@@ -143,7 +143,7 @@ describe("computeForecast - Magic Month Scenario", () => {
       {
         id: "202",
         name: "Car Insurance",
-        amount: 1200,
+        amount: 120000,
         dueDate: new Date("2025-05-20T00:00:00.000Z"), // 2025 Anchor
         scheduleType: "yearly",
         payRail: "AMEX",
@@ -157,20 +157,20 @@ describe("computeForecast - Magic Month Scenario", () => {
         bills,
         commitments: [],
         baselines: [],
-        buffer: 50,
+        buffer: 5000,
         startingBalance: 0,
       },
       today,
     );
 
     // Window A: [May 1, May 15). Payday included. Buffer subtracted.
-    expect(result.now.safeToSplurge).toBe(2950);
+    expect(result.now.safeToSplurge).toBe(295000);
 
     // Window B: [May 15, May 29). Includes Year 2026 instance of Insurance.
     expect(result.ifWait.breakdown.allBills).toHaveLength(1);
     expect(result.ifWait.breakdown.allBills[0].dueDate.getUTCFullYear()).toBe(
       2026,
     );
-    expect(result.ifWait.safeToSplurge).toBe(4750); // (3000 - 50) + (3000 - 1200)
+    expect(result.ifWait.safeToSplurge).toBe(475000); // (300000 - 5000) + (300000 - 120000)
   });
 });

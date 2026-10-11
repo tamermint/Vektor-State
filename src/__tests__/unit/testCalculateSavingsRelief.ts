@@ -14,10 +14,10 @@ function createTimelineEvent(
     timestamp: baseDate,
     type: "bill",
     label: "Test Event",
-    amount: -100,
+    amount: -10000,
     paymentConstraints: "hard",
     priority: 0,
-    runningBalance: 1000,
+    runningBalance: 100000,
     liquidityStatus: "stable",
     headroom: 0,
     ...overrides,
@@ -27,21 +27,21 @@ function createTimelineEvent(
 describe("calculateSavingsRelief", () => {
   describe("Validation", () => {
     it("should throw ValidationError when timeline events array is empty", () => {
-      expect(() => calculateSavingsRelief([], 50)).toThrow(ValidationError);
-      expect(() => calculateSavingsRelief([], 50)).toThrow(
+      expect(() => calculateSavingsRelief([], 5000)).toThrow(ValidationError);
+      expect(() => calculateSavingsRelief([], 5000)).toThrow(
         "There must be atleast one timeline event",
       );
     });
 
     it("should throw ValidationError when timeline events is null", () => {
       expect(() =>
-        calculateSavingsRelief(null as unknown as TimelineEvent[], 50),
+        calculateSavingsRelief(null as unknown as TimelineEvent[], 5000),
       ).toThrow(ValidationError);
     });
 
     it("should throw ValidationError when timeline events is undefined", () => {
       expect(() =>
-        calculateSavingsRelief(undefined as unknown as TimelineEvent[], 50),
+        calculateSavingsRelief(undefined as unknown as TimelineEvent[], 5000),
       ).toThrow(ValidationError);
     });
   });
@@ -51,19 +51,19 @@ describe("calculateSavingsRelief", () => {
       const events: TimelineEvent[] = [
         createTimelineEvent({
           id: "event-1",
-          runningBalance: 100,
+          runningBalance: 10000,
         }),
         createTimelineEvent({
           id: "event-2",
-          runningBalance: 200,
+          runningBalance: 20000,
         }),
         createTimelineEvent({
           id: "event-3",
-          runningBalance: 150,
+          runningBalance: 15000,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).toBeNull();
     });
 
@@ -71,15 +71,15 @@ describe("calculateSavingsRelief", () => {
       const events: TimelineEvent[] = [
         createTimelineEvent({
           id: "event-1",
-          runningBalance: 100,
+          runningBalance: 10000,
         }),
         createTimelineEvent({
           id: "event-2",
-          runningBalance: 50,
+          runningBalance: 5000,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).toBeNull();
     });
 
@@ -89,18 +89,18 @@ describe("calculateSavingsRelief", () => {
           id: "event-1",
           type: "commitment",
           paymentConstraints: "hard",
-          runningBalance: 100,
-          amount: -50,
+          runningBalance: 10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).toBeNull();
     });
 
@@ -113,21 +113,21 @@ describe("calculateSavingsRelief", () => {
           id: "event-1",
           timestamp: minDate,
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           timestamp: afterMinDate,
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).toBeNull();
     });
   });
@@ -138,28 +138,28 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -200,
+          runningBalance: -10000,
+          amount: -20000,
           priority: 1,
           label: "Soft Commitment 1",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
       expect(result!.isFullyResolved).toBe(true);
-      expect(result!.totalReliefAmount).toBe(150); // |−100| + 50 = 150
-      expect(result!.predictedBalance).toBe(50); // -100 + 150 = 50
+      expect(result!.totalReliefAmount).toBe(15000); // |−10000| + 5000 = 15000
+      expect(result!.predictedBalance).toBe(5000); // -10000 + 15000 = 5000
       expect(result!.actions).toHaveLength(1);
-      expect(result!.actions[0].amountUnlocked).toBe(150);
-      expect(result!.actions[0].remainingCommitment).toBe(50); // 200 - 150
+      expect(result!.actions[0].amountUnlocked).toBe(15000);
+      expect(result!.actions[0].remainingCommitment).toBe(5000); // 20000 - 15000
     });
 
     it("should fully resolve with multiple soft commitments", () => {
@@ -167,15 +167,15 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -80,
+          runningBalance: -10000,
+          amount: -8000,
           priority: 2,
           label: "Commitment 1",
         }),
@@ -183,25 +183,25 @@ describe("calculateSavingsRelief", () => {
           id: "event-3",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -100,
+          runningBalance: -10000,
+          amount: -10000,
           priority: 1,
           label: "Commitment 2",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
       expect(result!.isFullyResolved).toBe(true);
-      // Gap = |−100| + 50 = 150
-      // Priority 2 first: takes 80
-      // Priority 1 next: takes remaining 70
-      expect(result!.totalReliefAmount).toBe(150);
+      // Gap = |−10000| + 5000 = 15000
+      // Priority 2 first: takes 8000
+      // Priority 1 next: takes remaining 7000
+      expect(result!.totalReliefAmount).toBe(15000);
       expect(result!.actions).toHaveLength(2);
       expect(result!.actions[0].label).toBe("Commitment 1"); // priority 2 first
-      expect(result!.actions[0].amountUnlocked).toBe(80);
+      expect(result!.actions[0].amountUnlocked).toBe(8000);
       expect(result!.actions[1].label).toBe("Commitment 2"); // priority 1 next
-      expect(result!.actions[1].amountUnlocked).toBe(70);
+      expect(result!.actions[1].amountUnlocked).toBe(7000);
     });
 
     it("should respect priority order when resolving", () => {
@@ -209,15 +209,15 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -200,
-          amount: -50,
+          runningBalance: -20000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -200,
-          amount: -50,
+          runningBalance: -20000,
+          amount: -5000,
           priority: 1,
           label: "Low Priority",
         }),
@@ -225,14 +225,14 @@ describe("calculateSavingsRelief", () => {
           id: "event-3",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -200,
-          amount: -100,
+          runningBalance: -20000,
+          amount: -10000,
           priority: 10,
           label: "High Priority",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
       expect(result!.actions[0].label).toBe("High Priority"); // priority 10 comes first
       expect(result!.actions[1].label).toBe("Low Priority"); // priority 1 comes second
@@ -245,28 +245,28 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -500,
-          amount: -50,
+          runningBalance: -50000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -500,
-          amount: -200,
+          runningBalance: -50000,
+          amount: -20000,
           priority: 1,
           label: "Soft Commitment 1",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      // Gap = |−500| + 50 = 550, but can only unlock 200
+      // Gap = |−50000| + 5000 = 55000, but can only unlock 20000
       expect(result!.isFullyResolved).toBe(false);
-      expect(result!.totalReliefAmount).toBe(200);
-      expect(result!.predictedBalance).toBe(-300); // -500 + 200
+      expect(result!.totalReliefAmount).toBe(20000);
+      expect(result!.predictedBalance).toBe(-30000); // -50000 + 20000
       expect(result!.actions).toHaveLength(1);
-      expect(result!.actions[0].amountUnlocked).toBe(200);
+      expect(result!.actions[0].amountUnlocked).toBe(20000);
       expect(result!.actions[0].remainingCommitment).toBe(0);
     });
 
@@ -275,15 +275,15 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -300,
-          amount: -50,
+          runningBalance: -30000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -300,
-          amount: -100,
+          runningBalance: -30000,
+          amount: -10000,
           priority: 2,
           label: "Commitment 1",
         }),
@@ -291,21 +291,21 @@ describe("calculateSavingsRelief", () => {
           id: "event-3",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -300,
-          amount: -100,
+          runningBalance: -30000,
+          amount: -10000,
           priority: 1,
           label: "Commitment 2",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      // Gap = |−300| + 50 = 350, but can only unlock 200
+      // Gap = |−30000| + 5000 = 35000, but can only unlock 20000
       expect(result!.isFullyResolved).toBe(false);
-      expect(result!.totalReliefAmount).toBe(200);
+      expect(result!.totalReliefAmount).toBe(20000);
       expect(result!.actions).toHaveLength(2);
-      expect(result!.actions[0].amountUnlocked).toBe(100); // priority 2
-      expect(result!.actions[1].amountUnlocked).toBe(100); // priority 1
+      expect(result!.actions[0].amountUnlocked).toBe(10000); // priority 2
+      expect(result!.actions[1].amountUnlocked).toBe(10000); // priority 1
     });
   });
 
@@ -315,23 +315,23 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -150,
+          runningBalance: -10000,
+          amount: -15000,
           priority: 1,
         }),
       ];
 
       const result = calculateSavingsRelief(events, 0);
       expect(result).not.toBeNull();
-      // Gap = |−100| + 0 = 100
-      expect(result!.totalReliefAmount).toBe(100);
+      // Gap = |−10000| + 0 = 10000
+      expect(result!.totalReliefAmount).toBe(10000);
       expect(result!.predictedBalance).toBe(0);
     });
 
@@ -340,21 +340,21 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -150,
+          runningBalance: -10000,
+          amount: -15000,
           priority: undefined,
           label: "Commitment without priority",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
       expect(result!.actions).toHaveLength(1);
       expect(result!.actions[0].label).toBe("Commitment without priority");
@@ -365,20 +365,20 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "hard",
-          runningBalance: -100,
-          amount: -200,
+          runningBalance: -10000,
+          amount: -20000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).toBeNull(); // hard commitments are not considered
     });
 
@@ -392,16 +392,16 @@ describe("calculateSavingsRelief", () => {
           id: "event-1",
           timestamp: minDate,
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           timestamp: beforeMinDate,
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -200,
+          runningBalance: -10000,
+          amount: -20000,
           priority: 1,
           label: "Before min",
         }),
@@ -410,14 +410,14 @@ describe("calculateSavingsRelief", () => {
           timestamp: afterMinDate,
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -200,
+          runningBalance: -10000,
+          amount: -20000,
           priority: 2,
           label: "After min",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
       expect(result!.actions).toHaveLength(1);
       expect(result!.actions[0].label).toBe("Before min");
@@ -428,25 +428,25 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -150,
-          amount: -50,
+          runningBalance: -15000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -150,
-          amount: -200,
+          runningBalance: -15000,
+          amount: -20000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      // Gap = |−150| + 50 = 200, commitment is exactly 200
+      // Gap = |−15000| + 5000 = 20000, commitment is exactly 20000
       expect(result!.isFullyResolved).toBe(true);
-      expect(result!.totalReliefAmount).toBe(200);
-      expect(result!.predictedBalance).toBe(50);
+      expect(result!.totalReliefAmount).toBe(20000);
+      expect(result!.predictedBalance).toBe(5000);
       expect(result!.actions[0].remainingCommitment).toBe(0);
     });
 
@@ -455,24 +455,24 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -10000,
-          amount: -50,
+          runningBalance: -1000000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -10000,
-          amount: -1000,
+          runningBalance: -1000000,
+          amount: -100000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      // Gap = 10000 + 50 = 10050
+      // Gap = 1000000 + 5000 = 1005000
       expect(result!.isFullyResolved).toBe(false);
-      expect(result!.totalReliefAmount).toBe(1000);
+      expect(result!.totalReliefAmount).toBe(100000);
     });
 
     it("should stop taking from commitments once gap is covered", () => {
@@ -480,15 +480,15 @@ describe("calculateSavingsRelief", () => {
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -100,
-          amount: -50,
+          runningBalance: -10000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -100,
+          runningBalance: -10000,
+          amount: -10000,
           priority: 2,
           label: "Commitment 1",
         }),
@@ -496,78 +496,77 @@ describe("calculateSavingsRelief", () => {
           id: "event-3",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -100,
-          amount: -100,
+          runningBalance: -10000,
+          amount: -10000,
           priority: 1,
           label: "Commitment 2",
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
-      // Gap = 150, Commitment 1 (priority 2) covers 100, Commitment 2 (priority 1) covers remaining 50
+      const result = calculateSavingsRelief(events, 5000);
+      // Gap = 15000, Commitment 1 (priority 2) covers 10000, Commitment 2 (priority 1) covers remaining 5000
       expect(result).not.toBeNull();
       expect(result!.actions).toHaveLength(2);
-      expect(result!.actions[0].amountUnlocked).toBe(100);
-      expect(result!.actions[1].amountUnlocked).toBe(50); // Only takes what's needed
-      expect(result!.actions[1].remainingCommitment).toBe(50); // 100 - 50
+      expect(result!.actions[0].amountUnlocked).toBe(10000);
+      expect(result!.actions[1].amountUnlocked).toBe(5000); // Only takes what's needed
+      expect(result!.actions[1].remainingCommitment).toBe(5000); // 10000 - 5000
     });
   });
 
   describe("Numeric precision", () => {
-    it("should correctly calculate predicted balance with floating point arithmetic", () => {
+    it("should correctly calculate predicted balance with integer cents arithmetic", () => {
       const events: TimelineEvent[] = [
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: -123.45,
-          amount: -50,
+          runningBalance: -12345,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: -123.45,
-          amount: -200,
+          runningBalance: -12345,
+          amount: -20000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      // Gap = 123.45 + 50 = 173.45
-      const expectedBalance = Math.round((-123.45 + 173.45) * 100) / 100;
-      expect(result!.predictedBalance).toBe(expectedBalance);
+      // Gap = 12345 + 5000 = 17345
+      expect(result!.predictedBalance).toBe(5000);
     });
   });
 
   describe("Positive balance below buffer", () => {
     it("should accurately calculate relief gap when running balance is positive but below buffer", () => {
-      // User has minimum balance of +$20, buffer is $50.
-      // Expected gap is $30 ($50 - $20), NOT $70 ($20 + $50).
+      // User has minimum balance of +$20 (2000 cents), buffer is $50 (5000 cents).
+      // Expected gap is $30 (3000 cents) ($50 - $20), NOT $70 ($20 + $50).
       const events: TimelineEvent[] = [
         createTimelineEvent({
           id: "event-1",
           type: "bill",
-          runningBalance: 20,
-          amount: -50,
+          runningBalance: 2000,
+          amount: -5000,
         }),
         createTimelineEvent({
           id: "event-2",
           type: "commitment",
           paymentConstraints: "soft",
-          runningBalance: 20,
-          amount: -100,
+          runningBalance: 2000,
+          amount: -10000,
           priority: 1,
         }),
       ];
 
-      const result = calculateSavingsRelief(events, 50);
+      const result = calculateSavingsRelief(events, 5000);
       expect(result).not.toBeNull();
-      expect(result!.totalReliefAmount).toBe(30);
-      expect(result!.predictedBalance).toBe(50);
+      expect(result!.totalReliefAmount).toBe(3000);
+      expect(result!.predictedBalance).toBe(5000);
       expect(result!.isFullyResolved).toBe(true);
-      expect(result!.actions[0].amountUnlocked).toBe(30);
-      expect(result!.actions[0].remainingCommitment).toBe(70);
+      expect(result!.actions[0].amountUnlocked).toBe(3000);
+      expect(result!.actions[0].remainingCommitment).toBe(7000);
     });
   });
 });

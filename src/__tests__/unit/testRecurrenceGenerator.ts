@@ -7,7 +7,7 @@ describe("testRecurrenceGenerator", () => {
     const bill: Bill = {
       id: "32",
       name: "Internet",
-      amount: 89.89,
+      amount: 8989,
       dueDate: new Date("2026-02-21"),
       scheduleType: "monthly",
       payRail: "AMEX",
@@ -18,7 +18,7 @@ describe("testRecurrenceGenerator", () => {
     const expectedFutureBills: FutureBill[] = [
       {
         name: "Internet",
-        amount: 89.89,
+        amount: 8989,
         dueDate: new Date("2026-02-21"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -26,7 +26,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "Internet",
-        amount: 89.89,
+        amount: 8989,
         dueDate: new Date("2026-03-21"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -44,7 +44,7 @@ describe("testRecurrenceGenerator", () => {
     const bill: Bill = {
       id: "32",
       name: "Internet",
-      amount: 89.89,
+      amount: 8989,
       dueDate: new Date("2026-02-16"),
       scheduleType: "monthly",
       payRail: "AMEX",
@@ -55,7 +55,7 @@ describe("testRecurrenceGenerator", () => {
     const expectedFutureBills: FutureBill[] = [
       {
         name: "Internet",
-        amount: 89.89,
+        amount: 8989,
         dueDate: new Date("2026-03-16"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -63,7 +63,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "Internet",
-        amount: 89.89,
+        amount: 8989,
         dueDate: new Date("2026-04-16"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -71,7 +71,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "Internet",
-        amount: 89.89,
+        amount: 8989,
         dueDate: new Date("2026-05-16"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -97,7 +97,7 @@ describe("testRecurrenceGenerator", () => {
     const bill: Bill = {
       id: "32",
       name: "NRMA - Car Insurance",
-      amount: 2034.89,
+      amount: 203489,
       dueDate: new Date("2025-08-21"),
       scheduleType: "yearly",
       payRail: "AMEX",
@@ -108,7 +108,7 @@ describe("testRecurrenceGenerator", () => {
     const expectedFutureBills: FutureBill[] = [
       {
         name: "NRMA - Car Insurance",
-        amount: 2034.89,
+        amount: 203489,
         dueDate: new Date("2026-08-21"),
         scheduleType: "yearly",
         payRail: "AMEX",
@@ -116,7 +116,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "NRMA - Car Insurance",
-        amount: 2034.89,
+        amount: 203489,
         dueDate: new Date("2027-08-21"),
         scheduleType: "yearly",
         payRail: "AMEX",
@@ -124,7 +124,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "NRMA - Car Insurance",
-        amount: 2034.89,
+        amount: 203489,
         dueDate: new Date("2028-08-21"),
         scheduleType: "yearly",
         payRail: "AMEX",
@@ -132,7 +132,7 @@ describe("testRecurrenceGenerator", () => {
       },
       {
         name: "NRMA - Car Insurance",
-        amount: 2034.89,
+        amount: 203489,
         dueDate: new Date("2029-08-21"),
         scheduleType: "yearly",
         payRail: "AMEX",
@@ -150,7 +150,7 @@ describe("testRecurrenceGenerator", () => {
     const validBill: Bill = {
       id: "1",
       name: "test bill",
-      amount: 50,
+      amount: 5000,
       dueDate: new Date(),
       scheduleType: "monthly",
       payRail: "Bank",

@@ -10,7 +10,7 @@ describe("testInflowGenerator", () => {
       inflows: [
         {
           id: "1",
-          amount: 3500,
+          amount: 350000,
           date: new Date("2026-03-04"),
           label: "primary pay",
         },
@@ -29,7 +29,7 @@ describe("testInflowGenerator", () => {
       inflows: [
         {
           id: "1",
-          amount: 3500,
+          amount: 350000,
           date: new Date("2026-03-04"),
           label: "primary pay",
         },
@@ -72,7 +72,7 @@ describe("testInflowGenerator", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000.54,
+          amount: 300054,
           date: new Date("2026-02-18"),
           label: "Salary",
         },
@@ -88,7 +88,7 @@ describe("testInflowGenerator", () => {
     const expectedResult: Inflow[] = [
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-02-18"),
         label: "Salary",
       },
@@ -102,13 +102,13 @@ describe("testInflowGenerator", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000.54,
+          amount: 300054,
           date: new Date("2026-02-18"),
           label: "Salary",
         },
         {
           id: "2",
-          amount: 690.45,
+          amount: 69045,
           date: new Date("2026-02-19"),
           label: "Packaged Salary",
         },
@@ -124,13 +124,13 @@ describe("testInflowGenerator", () => {
     const expectedResult: Inflow[] = [
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-02-18"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-02-19"),
         label: "Packaged Salary",
       },
@@ -144,13 +144,13 @@ describe("testInflowGenerator", () => {
       inflows: [
         {
           id: "1",
-          amount: 3000.54,
+          amount: 300054,
           date: new Date("2026-02-18"),
           label: "Salary",
         },
         {
           id: "2",
-          amount: 690.45,
+          amount: 69045,
           date: new Date("2026-02-19"),
           label: "Packaged Salary",
         },
@@ -166,67 +166,67 @@ describe("testInflowGenerator", () => {
     const expectedResult: Inflow[] = [
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-02-18"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-02-19"),
         label: "Packaged Salary",
       },
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-03-04"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-03-05"),
         label: "Packaged Salary",
       },
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-03-18"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-03-19"),
         label: "Packaged Salary",
       },
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-04-01"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-04-02"),
         label: "Packaged Salary",
       },
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-04-15"),
         label: "Salary",
       },
       {
         id: "2",
-        amount: 690.45,
+        amount: 69045,
         date: new Date("2026-04-16"),
         label: "Packaged Salary",
       },
       {
         id: "1",
-        amount: 3000.54,
+        amount: 300054,
         date: new Date("2026-04-29"),
         label: "Salary",
       },

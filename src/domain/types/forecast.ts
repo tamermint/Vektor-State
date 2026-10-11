@@ -2,15 +2,15 @@ import { z } from "zod";
 import { Frequency, Plan, ScheduleType } from "@/generated/prisma/enums";
 
 export const OnboardingPayloadSchema = z.object({
-  startingBalance: z.number(),
-  buffer: z.number(),
+  startingBalance: z.number().int(),
+  buffer: z.number().int(),
   paySchedule: z.object({
     id: z.uuidv4(), // Client-minted ID
     frequency: z.enum(Frequency),
     inflows: z.array(
       z.object({
         id: z.uuidv4(),
-        amount: z.number(),
+        amount: z.number().int(),
         date: z.coerce.date(),
         label: z.string(),
       }),
@@ -20,7 +20,7 @@ export const OnboardingPayloadSchema = z.object({
     z.object({
       id: z.uuidv4(),
       name: z.string(),
-      amount: z.number(),
+      amount: z.number().int(),
       dueDate: z.coerce.date(),
       scheduleType: z.enum(ScheduleType),
       payRail: z.string(),
@@ -31,7 +31,7 @@ export const OnboardingPayloadSchema = z.object({
     z.object({
       id: z.uuidv4(),
       commitmentType: z.string(),
-      commitmentAmount: z.number(),
+      commitmentAmount: z.number().int(),
       constraint: z.enum(["hard", "soft"]),
       priority: z.number(),
     }),
@@ -40,14 +40,14 @@ export const OnboardingPayloadSchema = z.object({
     z.object({
       id: z.uuidv4(),
       name: z.string(),
-      amount: z.number(),
+      amount: z.number().int(),
     }),
   ),
   expenses: z.array(
     z.object({
       id: z.uuidv4(),
       name: z.string(),
-      amount: z.number(),
+      amount: z.number().int(),
       date: z.coerce.date(),
     }),
   ),
@@ -72,12 +72,12 @@ export const TimelineEventSchema = z.object({
   timestamp: z.coerce.date(),
   type: z.literal(["inflow", "bill", "commitment", "baseline", "expense"]),
   label: z.string(),
-  amount: z.number(), //signed: -ve for outflows and +ve for inflows
+  amount: z.number().int(), //signed: -ve for outflows and +ve for inflows
   paymentConstraints: z.literal(["hard", "soft"]),
   priority: z.optional(z.number()),
-  runningBalance: z.number(),
+  runningBalance: z.number().int(),
   liquidityStatus: z.literal(["stable", "warning", "critical"]),
-  headroom: z.number(),
+  headroom: z.number().int(),
 });
 export type TimelineEvent = z.infer<typeof TimelineEventSchema>;
 
@@ -92,7 +92,7 @@ export const SimpleTimelineSchema = z.object({
   label: TimelineEventSchema.shape.label,
   type: z.string(),
   amount: TimelineEventSchema.shape.amount,
-  balance: z.number(),
+  balance: z.number().int(),
   status: z.string(),
 });
 export type SimpleTimeline = z.infer<typeof SimpleTimelineSchema>;
@@ -105,8 +105,8 @@ export type SimpleTimeline = z.infer<typeof SimpleTimelineSchema>;
 export const ReliefActionSchema = z.object({
   targetEventId: z.string(),
   label: z.string(),
-  amountUnlocked: z.number(),
-  remainingCommitment: z.number(),
+  amountUnlocked: z.number().int(),
+  remainingCommitment: z.number().int(),
 });
 export type ReliefAction = z.infer<typeof ReliefActionSchema>;
 
@@ -119,8 +119,8 @@ export type ReliefAction = z.infer<typeof ReliefActionSchema>;
 export const SavingsReliefSchema = z.object({
   minBalanceDate: z.coerce.date(),
   actions: z.array(ReliefActionSchema),
-  totalReliefAmount: z.number(),
-  predictedBalance: z.number(),
+  totalReliefAmount: z.number().int(),
+  predictedBalance: z.number().int(),
   isFullyResolved: z.boolean(),
 });
 
@@ -133,7 +133,7 @@ export type SavingsRelief = z.infer<typeof SavingsReliefSchema>;
 export const SuggestedDeferralActionSchema = z.object({
   id: z.string(),
   label: z.string(),
-  amount: z.number(),
+  amount: z.number().int(),
   date: z.coerce.date(),
 });
 export type SuggestedDeferralAction = z.infer<
@@ -158,7 +158,7 @@ export type DeferralPlan = z.infer<typeof DeferralPlanSchema>;
 
 export const Inflow = z.object({
   id: z.string(),
-  amount: z.number(),
+  amount: z.number().int(),
   date: z.coerce.date(),
   label: z.string(),
 });
@@ -185,7 +185,7 @@ export type PaySchedule = z.infer<typeof PayScheduleSchema>;
 export const BillSchema = z.object({
   id: z.string(),
   name: z.string(),
-  amount: z.number(),
+  amount: z.number().int(),
   dueDate: z.coerce.date(),
   scheduleType: z.literal(["weekly", "fortnightly", "monthly", "yearly"]),
   payRail: z.string(),
@@ -208,7 +208,7 @@ export type FutureBill = z.infer<typeof FutureBillSchema>;
 export const CommitmentSchema = z.object({
   id: z.string(),
   commitmentType: z.string(),
-  commitmentAmount: z.number(),
+  commitmentAmount: z.number().int(),
   constraint: z.literal(["hard", "soft"]),
   priority: z.number(),
 });
@@ -221,7 +221,7 @@ export type Commitment = z.infer<typeof CommitmentSchema>;
 export const BaselineSchema = z.object({
   id: z.string(),
   name: z.string(),
-  amount: z.number(),
+  amount: z.number().int(),
 });
 export type Baseline = z.infer<typeof BaselineSchema>;
 
@@ -232,7 +232,7 @@ export type Baseline = z.infer<typeof BaselineSchema>;
 export const oneOffExpenseSchema = z.object({
   id: z.string(),
   name: z.string(),
-  amount: z.number(),
+  amount: z.number().int(),
   date: z.coerce.date(),
 });
 export type oneOffExpense = z.infer<typeof oneOffExpenseSchema>;
@@ -257,8 +257,8 @@ export const SplurgeGoalSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   goalType: z.enum(["asset", "experience"]),
-  targetAmount: z.number(),
-  currentProgress: z.number(),
+  targetAmount: z.number().int(),
+  currentProgress: z.number().int(),
   priority: z.number().min(1).max(3),
   isAutoFunded: z.boolean().default(false),
 });
@@ -275,8 +275,8 @@ export const ForecastInputSchema = z.object({
   commitments: z.array(CommitmentSchema),
   baselines: z.array(BaselineSchema),
   expenses: z.optional(z.array(oneOffExpenseSchema)),
-  buffer: z.number().default(50),
-  startingBalance: z.number().optional().default(0),
+  buffer: z.number().int().default(5000),
+  startingBalance: z.number().int().optional().default(0),
   splurgeGoal: z.array(SplurgeGoalSchema).optional(),
 });
 export type ForecastInput = z.infer<typeof ForecastInputSchema>;
@@ -302,14 +302,14 @@ export type TeaserInput = z.infer<typeof TeaserInputSchema>;
  * @description Representation of a user's profile - income, commitments, baselines, buffer, bills, the timeline of events etc.
  */
 export const BreakdownSchema = z.object({
-  income: z.number(),
+  income: z.number().int(),
   commitments: z.array(CommitmentSchema),
   baselines: z.array(BaselineSchema),
-  buffer: z.number(),
-  totalBillAmount: z.number(),
+  buffer: z.number().int(),
+  totalBillAmount: z.number().int(),
   allBills: z.array(z.union([BillSchema, FutureBillSchema])),
   timeline: z.array(TimelineEventSchema), //The timeline here gives the AI coach enough grounded context to infer and advice.
-  carryOver: z.number().default(0),
+  carryOver: z.number().int().default(0),
 });
 export type Breakdown = z.infer<typeof BreakdownSchema>;
 
@@ -332,10 +332,10 @@ export type SimpleBreakdown = z.infer<typeof SimpleBreakdownSchema>;
  * Shortfall is calculated as: $$Shortfall = \max(0, Buffer - PredictedBalance)$$
  */
 export const StructuralDeficitSchema = z.object({
-  shortfall: z.number(),
+  shortfall: z.number().int(),
   criticalDate: z.coerce.date(),
   resolutionDate: z.coerce.date().nullable(),
-  daysUnderBuffer: z.number(),
+  daysUnderBuffer: z.number().int(),
   isTerminal: z.boolean(),
 });
 export type StructuralDeficit = z.infer<typeof StructuralDeficitSchema>;
@@ -348,16 +348,16 @@ export type StructuralDeficit = z.infer<typeof StructuralDeficitSchema>;
  */
 export const ForecastOutputSchema = z.object({
   now: z.object({
-    safeToSplurge: z.number(),
+    safeToSplurge: z.number().int(),
     status: z.string(),
     breakdown: BreakdownSchema,
   }),
   ifWait: z.object({
-    safeToSplurge: z.number(),
+    safeToSplurge: z.number().int(),
     status: z.string(),
     breakdown: BreakdownSchema,
   }),
-  patiencePayoff: z.number(),
+  patiencePayoff: z.number().int(),
   suggestedRelief: z.optional(SavingsReliefSchema).nullable(),
   deferralPlan: z.optional(DeferralPlanSchema).nullable(),
   structuralDeficit: z.optional(StructuralDeficitSchema).nullable(),
@@ -386,7 +386,7 @@ export type TrimmedForecastOutput = z.infer<typeof TrimmedForecastOutputSchema>;
  */
 export const BillsInWindowResultSchema = z.object({
   bills: z.array(z.union([BillSchema, FutureBillSchema])),
-  totalAmount: z.number(),
+  totalAmount: z.number().int(),
 });
 export type BillsInWindowResult = z.infer<typeof BillsInWindowResultSchema>;
 
@@ -396,6 +396,6 @@ export type BillsInWindowResult = z.infer<typeof BillsInWindowResultSchema>;
  */
 export const InflowsInWindowResultSchema = z.object({
   inflows: z.array(Inflow),
-  totalAmount: z.number(),
+  totalAmount: z.number().int(),
 });
 export type InflowsInWindowResult = z.infer<typeof InflowsInWindowResultSchema>;

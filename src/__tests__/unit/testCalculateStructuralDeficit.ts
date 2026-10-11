@@ -13,11 +13,11 @@ const buildTimelineEvent = (
   timestamp: new Date("2026-04-01"),
   type: "inflow",
   label: "Salary",
-  amount: 1000,
+  amount: 100000,
   paymentConstraints: "hard",
-  runningBalance: 1000,
+  runningBalance: 100000,
   liquidityStatus: "stable",
-  headroom: 500,
+  headroom: 50000,
   ...overrides,
 });
 
@@ -25,7 +25,7 @@ const buildRelief = (overrides: Partial<SavingsRelief>): SavingsRelief => ({
   minBalanceDate: new Date("2026-04-10"),
   actions: [],
   totalReliefAmount: 0,
-  predictedBalance: -200, // Short $200
+  predictedBalance: -20000, // Short $200 (20000 cents)
   isFullyResolved: false,
   ...overrides,
 });
@@ -39,7 +39,7 @@ const buildDeferrals = (overrides: Partial<DeferralPlan>): DeferralPlan => ({
 describe("calculateStructuralDeficit", () => {
   describe("1. Guard Clauses", () => {
     test("returns null if the situation is already resolved", () => {
-      const timeline = [buildTimelineEvent({ runningBalance: 100 })];
+      const timeline = [buildTimelineEvent({ runningBalance: 10000 })];
       const relief = buildRelief({ isFullyResolved: true });
       const deferrals = buildDeferrals({ isNowResolved: false });
 
@@ -47,7 +47,7 @@ describe("calculateStructuralDeficit", () => {
         timeline,
         relief,
         deferrals,
-        50,
+        5000,
       );
       expect(result).toBeNull();
     });
@@ -56,7 +56,7 @@ describe("calculateStructuralDeficit", () => {
       const relief = buildRelief({});
       const deferrals = buildDeferrals({});
       expect(() =>
-        calculateStructuralDeficit([], relief, deferrals, 50),
+        calculateStructuralDeficit([], relief, deferrals, 5000),
       ).toThrow(ValidationError);
     });
   });
@@ -66,27 +66,27 @@ describe("calculateStructuralDeficit", () => {
       const timeline = [
         buildTimelineEvent({
           timestamp: new Date("2026-04-01"),
-          runningBalance: -100,
+          runningBalance: -10000,
         }),
         buildTimelineEvent({
           timestamp: new Date("2026-04-30"),
-          runningBalance: 500,
+          runningBalance: 50000,
         }),
       ];
 
-      const relief = buildRelief({ predictedBalance: -200 }); // Ditch is -$200
+      const relief = buildRelief({ predictedBalance: -20000 }); // Ditch is -$200 (20000 cents)
       const deferrals = buildDeferrals({
-        actions: [{ id: "b1", label: "Bill", amount: 50, date: new Date() }],
+        actions: [{ id: "b1", label: "Bill", amount: 5000, date: new Date() }],
       });
 
-      // Math: |-200| + 50 (buffer) - 50 (deferred) = 200
+      // Math: |-20000| + 5000 (buffer) - 5000 (deferred) = 20000
       const result = calculateStructuralDeficit(
         timeline,
         relief,
         deferrals,
-        50,
+        5000,
       );
-      expect(result?.shortfall).toBe(200);
+      expect(result?.shortfall).toBe(20000);
     });
   });
 
@@ -95,15 +95,15 @@ describe("calculateStructuralDeficit", () => {
       const timeline = [
         buildTimelineEvent({
           timestamp: new Date("2026-04-01"),
-          runningBalance: 100,
+          runningBalance: 10000,
         }),
         buildTimelineEvent({
           timestamp: new Date("2026-04-05"),
-          runningBalance: -50,
+          runningBalance: -5000,
         }), // Onset
         buildTimelineEvent({
           timestamp: new Date("2026-04-10"),
-          runningBalance: -200,
+          runningBalance: -20000,
         }),
       ];
 
@@ -111,7 +111,7 @@ describe("calculateStructuralDeficit", () => {
         timeline,
         buildRelief({}),
         buildDeferrals({}),
-        50,
+        5000,
       );
       expect(result?.criticalDate).toEqual(new Date("2026-04-05"));
     });
@@ -120,15 +120,15 @@ describe("calculateStructuralDeficit", () => {
       const timeline = [
         buildTimelineEvent({
           timestamp: new Date("2026-04-05"),
-          runningBalance: -50,
+          runningBalance: -5000,
         }),
         buildTimelineEvent({
           timestamp: new Date("2026-04-06"),
-          runningBalance: -20,
+          runningBalance: -2000,
         }),
         buildTimelineEvent({
           timestamp: new Date("2026-04-07"),
-          runningBalance: 100,
+          runningBalance: 10000,
         }), // Resolution
       ];
 
@@ -136,7 +136,7 @@ describe("calculateStructuralDeficit", () => {
         timeline,
         buildRelief({}),
         buildDeferrals({}),
-        50,
+        5000,
       );
       expect(result?.resolutionDate).toEqual(new Date("2026-04-07"));
     });
@@ -145,11 +145,11 @@ describe("calculateStructuralDeficit", () => {
       const timeline = [
         buildTimelineEvent({
           timestamp: new Date("2026-04-05"),
-          runningBalance: -50,
+          runningBalance: -5000,
         }),
         buildTimelineEvent({
           timestamp: new Date("2026-04-30"),
-          runningBalance: -10,
+          runningBalance: -1000,
         }), // Last event
       ];
 
@@ -157,7 +157,7 @@ describe("calculateStructuralDeficit", () => {
         timeline,
         buildRelief({}),
         buildDeferrals({}),
-        50,
+        5000,
       );
       expect(result?.isTerminal).toBe(true);
       expect(result?.resolutionDate).toBeNull();
@@ -166,12 +166,12 @@ describe("calculateStructuralDeficit", () => {
 
   describe("4. Psychological/Stability Metrics", () => {
     test("counts daysUnderBuffer correctly using Integer Supremacy", () => {
-      const buffer = 50;
+      const buffer = 5000;
       const timeline = [
-        buildTimelineEvent({ runningBalance: 100 }), // Stable
-        buildTimelineEvent({ runningBalance: 40 }), // Under Buffer
-        buildTimelineEvent({ runningBalance: -10 }), // Under Buffer
-        buildTimelineEvent({ runningBalance: 50 }), // Exactly Buffer (Not under)
+        buildTimelineEvent({ runningBalance: 10000 }), // Stable
+        buildTimelineEvent({ runningBalance: 4000 }), // Under Buffer
+        buildTimelineEvent({ runningBalance: -1000 }), // Under Buffer
+        buildTimelineEvent({ runningBalance: 5000 }), // Exactly Buffer (Not under)
       ];
 
       const result = calculateStructuralDeficit(

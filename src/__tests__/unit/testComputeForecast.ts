@@ -22,7 +22,7 @@ describe("computeForecast", () => {
       inflows: [
         {
           id: "1",
-          amount: 3704.32,
+          amount: 370432,
           date: new Date("2026-02-04T00:00:00.000Z"),
           label: "Salary",
         },
@@ -33,7 +33,7 @@ describe("computeForecast", () => {
       {
         id: "1",
         name: "Internet",
-        amount: 55,
+        amount: 5500,
         dueDate: new Date("2026-02-04T00:00:00.000Z"),
         scheduleType: "monthly",
         payRail: "AMEX",
@@ -45,14 +45,14 @@ describe("computeForecast", () => {
       {
         id: "1",
         commitmentType: "savings",
-        commitmentAmount: 1100,
+        commitmentAmount: 110000,
         constraint: "soft",
         priority: 1,
       },
     ];
     const baselines: Baseline[] = [
-      { id: "1", name: "groceries", amount: 300 },
-      { id: "2", name: "transport", amount: 70 },
+      { id: "1", name: "groceries", amount: 30000 },
+      { id: "2", name: "transport", amount: 7000 },
     ];
 
     const forecastInput: ForecastInput = {
@@ -60,15 +60,15 @@ describe("computeForecast", () => {
       bills,
       commitments,
       baselines,
-      buffer: 50,
+      buffer: 5000,
       startingBalance: 0,
     };
 
     const result: ForecastOutput = await computeForecast(forecastInput, date);
 
-    // Math: 3704.32 (Inflow) - 1100 (Savings) - 300 (Groc) - 70 (Trans) - 55 (Bill) = 2179.32
-    // Safe to Splurge: 2179.32 - 50 (Buffer) = 2129.32
-    expect(result.now.safeToSplurge).toBe(2129.32);
+    // Math: 370432 (Inflow) - 110000 (Savings) - 30000 (Groc) - 7000 (Trans) - 5500 (Bill) = 217932
+    // Safe to Splurge: 217932 - 5000 (Buffer) = 212932
+    expect(result.now.safeToSplurge).toBe(212932);
     expect(result.now.status).toBe("green");
 
     // Verify the timeline is populated
@@ -84,7 +84,7 @@ describe("computeForecast", () => {
       inflows: [
         {
           id: "1",
-          amount: 2000,
+          amount: 200000,
           date: new Date("2026-02-04T00:00:00.000Z"),
           label: "Salary",
         },
@@ -95,7 +95,7 @@ describe("computeForecast", () => {
       {
         id: "1",
         name: "Emergency Car Repair",
-        amount: 2500, // This is $500 more than the paycheck
+        amount: 250000, // This is $500 more than the paycheck
         date: new Date("2026-02-10T00:00:00.000Z"),
       },
     ];
@@ -104,7 +104,7 @@ describe("computeForecast", () => {
       {
         id: "1",
         commitmentType: "Vacation Fund",
-        commitmentAmount: 800,
+        commitmentAmount: 80000,
         constraint: "soft",
         priority: 10, // Least important, should be drained first
       },
@@ -116,7 +116,7 @@ describe("computeForecast", () => {
       expenses,
       commitments,
       baselines: [],
-      buffer: 100,
+      buffer: 10000,
       startingBalance: 0,
     };
 
@@ -125,18 +125,18 @@ describe("computeForecast", () => {
     /**
      * Math Trace:
      * 1. Starting Balance: 0
-     * 2. Inflow: +2000
-     * 3. Commitment: -800 (Running: 1200)
-     * 4. Expense: -2500 (Running: -1300) -> This is the minEvent
+     * 2. Inflow: +200000
+     * 3. Commitment: -80000 (Running: 120000)
+     * 4. Expense: -250000 (Running: -130000) -> This is the minEvent
      * * Relief Gap calculation:
-     * abs(-1300) + 100 (Buffer) = 1400
+     * abs(-130000) + 10000 (Buffer) = 140000
      * * Waterfall Drain:
-     * Vacation Fund available: 800
-     * Relief Amount taken: 800 (all of it)
+     * Vacation Fund available: 80000
+     * Relief Amount taken: 80000 (all of it)
      */
 
-    // 1. Splurge should be negative: -1300 - 100 = -1400
-    expect(result.now.safeToSplurge).toBe(-1400);
+    // 1. Splurge should be negative: -130000 - 10000 = -140000
+    expect(result.now.safeToSplurge).toBe(-140000);
     expect(result.now.status).toBe("critical");
 
     // 2. Relief logic check
@@ -145,13 +145,13 @@ describe("computeForecast", () => {
 
     expect(relief.actions).toHaveLength(1);
     expect(relief.actions[0].label).toBe("Vacation Fund");
-    expect(relief.actions[0].amountUnlocked).toBe(800);
-    expect(relief.totalReliefAmount).toBe(800);
+    expect(relief.actions[0].amountUnlocked).toBe(80000);
+    expect(relief.totalReliefAmount).toBe(80000);
 
-    // 3. Predicted Balance check: -1300 + 800 = -500
-    expect(relief.predictedBalance).toBe(-500);
+    // 3. Predicted Balance check: -130000 + 80000 = -50000
+    expect(relief.predictedBalance).toBe(-50000);
 
-    // 4. Resolution check: 800 < 1400 gap, so it's not fully resolved
+    // 4. Resolution check: 80000 < 140000 gap, so it's not fully resolved
     expect(relief.isFullyResolved).toBe(false);
   });
 });

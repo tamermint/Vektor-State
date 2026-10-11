@@ -12,12 +12,12 @@ const buildTimelineEvent = (
   timestamp: new Date("2026-04-01"),
   type: "inflow",
   label: "Salary",
-  amount: 1000,
+  amount: 100000,
   paymentConstraints: "hard",
   priority: 0,
-  runningBalance: 1000,
+  runningBalance: 100000,
   liquidityStatus: "stable",
-  headroom: 500,
+  headroom: 50000,
   ...overrides,
 });
 
@@ -28,7 +28,7 @@ const buildBill = (overrides: Partial<TimelineEvent>): TimelineEvent => {
   const defaults = {
     type: "bill" as const,
     paymentConstraints: "soft" as const,
-    amount: -100,
+    amount: -10000,
   };
   return { ...buildTimelineEvent(overrides), ...defaults, ...overrides };
 };
@@ -39,7 +39,7 @@ const buildBill = (overrides: Partial<TimelineEvent>): TimelineEvent => {
 const buildRelief = (overrides: Partial<SavingsRelief>): SavingsRelief => ({
   actions: [],
   totalReliefAmount: 0,
-  predictedBalance: -500,
+  predictedBalance: -50000,
   isFullyResolved: false,
   minBalanceDate: new Date("2026-12-31"),
   ...overrides,
@@ -48,25 +48,25 @@ const buildRelief = (overrides: Partial<SavingsRelief>): SavingsRelief => ({
 describe("calculateDeferrals", () => {
   describe("1. Input Validation & Null Cases", () => {
     test("1a. throws ValidationError for empty timeline", () => {
-      const relief = buildRelief({ predictedBalance: -500 });
-      expect(() => calculateDeferrals([], relief, 100)).toThrow(
+      const relief = buildRelief({ predictedBalance: -50000 });
+      expect(() => calculateDeferrals([], relief, 10000)).toThrow(
         ValidationError,
       );
-      expect(() => calculateDeferrals([], relief, 100)).toThrow(
+      expect(() => calculateDeferrals([], relief, 10000)).toThrow(
         "There must be atleast one timeline event",
       );
     });
 
     test("1b. throws ValidationError for null timeline", () => {
-      const relief = buildRelief({ predictedBalance: -500 });
+      const relief = buildRelief({ predictedBalance: -50000 });
       expect(() =>
-        calculateDeferrals(null as unknown as TimelineEvent[], relief, 100),
+        calculateDeferrals(null as unknown as TimelineEvent[], relief, 10000),
       ).toThrow(ValidationError);
     });
 
     test("1c. returns null when relief is null and timeline is healthy", () => {
       const timeline = [buildTimelineEvent({})];
-      const result = calculateDeferrals(timeline, null, 100);
+      const result = calculateDeferrals(timeline, null, 10000);
       expect(result).toBeNull();
     });
 
@@ -76,19 +76,19 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Electricity",
-          amount: -200,
-          runningBalance: -100,
+          amount: -20000,
+          runningBalance: -10000,
           headroom: 0,
         }),
         buildTimelineEvent({
           id: "income-2",
           timestamp: new Date("2026-04-15"),
-          amount: 2000,
-          runningBalance: 1900,
-          headroom: 1800,
+          amount: 200000,
+          runningBalance: 190000,
+          headroom: 180000,
         }),
       ];
-      const result = calculateDeferrals(timeline, null, 100);
+      const result = calculateDeferrals(timeline, null, 10000);
       expect(result).not.toBeNull();
       expect(result?.actions).toHaveLength(1);
       expect(result?.actions[0].id).toBe("bill-1");
@@ -99,7 +99,7 @@ describe("calculateDeferrals", () => {
     test("1d. returns null when relief.isFullyResolved is true", () => {
       const timeline = [buildTimelineEvent({})];
       const relief = buildRelief({ isFullyResolved: true });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const result = calculateDeferrals(timeline, relief, 10000);
       expect(result).toBeNull();
     });
 
@@ -109,12 +109,12 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Rent",
-          amount: -500,
+          amount: -50000,
           headroom: 0,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -600 });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const relief = buildRelief({ predictedBalance: -60000 });
+      const result = calculateDeferrals(timeline, relief, 10000);
       // No safe landing event, so no deferral possible
       expect(result).not.toBeNull();
       expect(result?.actions).toHaveLength(0);
@@ -128,19 +128,19 @@ describe("calculateDeferrals", () => {
         buildTimelineEvent({
           id: "income-1",
           type: "inflow",
-          amount: 1000,
-          headroom: 500,
+          amount: 100000,
+          headroom: 50000,
         }),
         buildTimelineEvent({
           id: "income-2",
           type: "inflow",
           timestamp: new Date("2026-05-01"),
-          amount: 1000,
-          headroom: 1000,
+          amount: 100000,
+          headroom: 100000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -200 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -20000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(0);
       expect(result?.isNowResolved).toBe(false); // gap not covered without deferrals
     });
@@ -151,20 +151,20 @@ describe("calculateDeferrals", () => {
           id: "hard-bill",
           type: "bill",
           label: "Mortgage",
-          amount: -500,
+          amount: -50000,
           paymentConstraints: "hard",
-          headroom: 100,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 500,
-          headroom: 600,
+          amount: 50000,
+          headroom: 60000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -400 });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const relief = buildRelief({ predictedBalance: -40000 });
+      const result = calculateDeferrals(timeline, relief, 10000);
       expect(result?.actions).toHaveLength(0);
     });
 
@@ -174,27 +174,27 @@ describe("calculateDeferrals", () => {
           id: "hard-bill",
           type: "bill",
           label: "Mortgage",
-          amount: -500,
+          amount: -50000,
           paymentConstraints: "hard",
-          headroom: 100,
+          headroom: 10000,
         }),
         buildBill({
           id: "soft-bill",
           timestamp: new Date("2026-04-05"),
           label: "Groceries",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(1);
       expect(result?.actions[0].id).toBe("soft-bill");
     });
@@ -207,24 +207,24 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Internet Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing-1",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
           label: "Salary",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(1);
       expect(result?.actions[0].id).toBe("bill-1");
       expect(result?.actions[0].label).toBe("Internet Bill"); // label propagation
-      expect(result?.actions[0].amount).toBe(100);
+      expect(result?.actions[0].amount).toBe(10000);
       expect(result?.actions[0].date).toEqual(new Date("2026-05-01"));
     });
 
@@ -234,26 +234,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Phone Bill",
-          amount: -50,
-          headroom: 100,
+          amount: -5000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Utilities",
-          amount: -75,
-          headroom: 100,
+          amount: -7500,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 500,
+          amount: 100000,
+          headroom: 50000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -200 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -20000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(2);
       expect(result?.actions[0].label).toBe("Phone Bill");
       expect(result?.actions[1].label).toBe("Utilities");
@@ -265,26 +265,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing-1",
           timestamp: new Date("2026-04-15"),
           type: "inflow",
-          amount: 1000,
-          headroom: 200, // sufficient but not picked first
+          amount: 100000,
+          headroom: 20000, // sufficient but not picked first
         }),
         buildTimelineEvent({
           id: "landing-2",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(1);
       expect(result?.actions[0].date).toEqual(new Date("2026-04-15")); // earliest landing
     });
@@ -296,26 +296,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: billDate,
           label: "Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-04-01"), // same timestamp
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
         buildTimelineEvent({
           id: "landing-2",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // Landing at same timestamp should not match (strictly after), so should pick landing-2
       expect(result?.actions[0].date).toEqual(new Date("2026-05-01"));
     });
@@ -328,26 +328,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -100,
-          headroom: 200,
+          amount: -10000,
+          headroom: 20000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -80,
-          headroom: 200,
+          amount: -8000,
+          headroom: 20000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -250 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -25000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
 
       // First bill (100) deferred to landing (300 headroom)
       expect(result?.actions[0].id).toBe("bill-1");
@@ -363,26 +363,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -150,
-          headroom: 100,
+          amount: -15000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -200,
-          headroom: 100,
+          amount: -20000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 200, // exactly enough for first bill only
+          amount: 100000,
+          headroom: 20000, // exactly enough for first bill only
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -350 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -35000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
 
       // Bill-1 (150) deferred to landing, headroom reduced to 200 - 150 = 50
       // Bill-2 (200) needs 200 but only 50 available, so not deferred
@@ -397,33 +397,33 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -100,
-          headroom: 100,
+          amount: -10000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "mid-event",
           timestamp: new Date("2026-04-15"),
           type: "inflow",
-          amount: 500,
-          headroom: 300,
+          amount: 50000,
+          headroom: 30000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 250,
+          amount: 100000,
+          headroom: 25000,
         }),
         buildTimelineEvent({
           id: "after-landing",
           timestamp: new Date("2026-06-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 250,
+          amount: 100000,
+          headroom: 25000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
 
       // Bill deferred to first suitable landing (mid-event or landing)
       // mid-event (300 headroom at 2026-04-15) is before landing (2026-05-01)
@@ -442,22 +442,22 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -250,
-          headroom: 100,
+          amount: -25000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 400,
+          amount: 100000,
+          headroom: 40000,
         }),
       ];
       const relief = buildRelief({
-        predictedBalance: -100,
+        predictedBalance: -10000,
         isFullyResolved: false,
       });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = abs(-100) + 50 = 150
       // bill amount = 250, exceeds gap, so gap becomes <= 0
       expect(result?.isNowResolved).toBe(true);
@@ -469,22 +469,22 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -50,
-          headroom: 100,
+          amount: -5000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
       const relief = buildRelief({
-        predictedBalance: -200,
+        predictedBalance: -20000,
         isFullyResolved: false,
       });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const result = calculateDeferrals(timeline, relief, 10000);
       // remainingGap = abs(-200) + 100 = 300
       // bill amount = 50, insufficient to cover gap
       expect(result?.isNowResolved).toBe(false);
@@ -496,30 +496,30 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -200,
-          headroom: 100,
+          amount: -20000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -150,
-          headroom: 100,
+          amount: -15000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 600,
+          amount: 100000,
+          headroom: 60000,
         }),
       ];
       // Large negative predictedBalance (insolvency)
       const relief = buildRelief({
-        predictedBalance: -800,
+        predictedBalance: -80000,
         isFullyResolved: false,
       });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const result = calculateDeferrals(timeline, relief, 10000);
       // remainingGap = abs(-800) + 100 = 900
       // deferrals = 200 + 150 = 350, < 900, so partial resolution
       expect(result?.isNowResolved).toBe(false);
@@ -533,26 +533,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing-early",
           timestamp: new Date("2026-04-20"),
           type: "inflow",
-          amount: 1000,
-          headroom: 150,
+          amount: 100000,
+          headroom: 15000,
         }),
         buildTimelineEvent({
           id: "landing-late",
           timestamp: new Date("2026-05-15"),
           type: "inflow",
-          amount: 1000,
-          headroom: 200,
+          amount: 100000,
+          headroom: 20000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions[0].date).toEqual(new Date("2026-04-20"));
     });
 
@@ -562,19 +562,19 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -150,
-          headroom: 50,
+          amount: -15000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 50, // insufficient headroom
+          amount: 100000,
+          headroom: 5000, // insufficient headroom
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -200 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -20000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       expect(result?.actions).toHaveLength(0);
       expect(result?.isNowResolved).toBe(false);
     });
@@ -586,26 +586,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: billDate,
           label: "Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing-same",
           timestamp: billDate, // exactly same
           type: "inflow",
-          amount: 1000,
-          headroom: 150,
+          amount: 100000,
+          headroom: 15000,
         }),
         buildTimelineEvent({
           id: "landing-after",
           timestamp: new Date("2026-04-01T10:00:01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 150,
+          amount: 100000,
+          headroom: 15000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // Should skip same-timestamp event and pick later one
       expect(result?.actions[0].date).toEqual(new Date("2026-04-01T10:00:01"));
     });
@@ -616,19 +616,19 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -100,
-          headroom: 50,
+          amount: -10000,
+          headroom: 5000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 99, // just under needed
+          amount: 100000,
+          headroom: 9900, // just under needed
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = 150, need 100 for bill, landing has 99 < 100
       expect(result?.actions).toHaveLength(0);
     });
@@ -641,25 +641,25 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -300,
-          headroom: 100,
+          amount: -30000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 500,
+          amount: 100000,
+          headroom: 50000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -300 });
+      const relief = buildRelief({ predictedBalance: -30000 });
 
       // Without buffer: remainingGap = 300, bill = 300, resolved
       const resultNoBuf = calculateDeferrals(timeline, relief, 0);
       expect(resultNoBuf?.isNowResolved).toBe(true);
 
       // With large buffer: remainingGap = 300 + 200 = 500, bill = 300, gap becomes 200 after deferral, unresolved
-      const resultWithBuf = calculateDeferrals(timeline, relief, 200);
+      const resultWithBuf = calculateDeferrals(timeline, relief, 20000);
       expect(resultWithBuf?.isNowResolved).toBe(false);
     });
 
@@ -669,18 +669,18 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill",
-          amount: -100,
-          headroom: 100,
+          amount: -10000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 150,
+          amount: 100000,
+          headroom: 15000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -100 });
+      const relief = buildRelief({ predictedBalance: -10000 });
       const result = calculateDeferrals(timeline, relief, 0);
       // remainingGap = 100 + 0 = 100, bill = 100
       expect(result?.isNowResolved).toBe(true);
@@ -693,19 +693,19 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Large Bill",
-          amount: -5000,
-          headroom: 100,
+          amount: -500000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 100, // way too small
+          amount: 100000,
+          headroom: 10000, // way too small
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -1500 });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const relief = buildRelief({ predictedBalance: -150000 });
+      const result = calculateDeferrals(timeline, relief, 10000);
       // remainingGap = 1500 + 100 = 1600, bill = 5000, won't fit
       expect(result?.actions).toHaveLength(0);
       expect(result?.isNowResolved).toBe(false);
@@ -717,19 +717,19 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Exact Bill",
-          amount: -250,
-          headroom: 100,
+          amount: -25000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 400,
+          amount: 100000,
+          headroom: 40000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -200 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -20000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = abs(-200) + 50 = 250
       // bill = 250, should cover exactly
       expect(result?.actions).toHaveLength(1);
@@ -743,18 +743,18 @@ describe("calculateDeferrals", () => {
           timestamp: new Date("2026-04-01"),
           label: "Zero Bill",
           amount: 0,
-          headroom: 100,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -200 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -20000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // Zero bill doesn't reduce gap
       expect(result?.isNowResolved).toBe(false);
     });
@@ -767,33 +767,33 @@ describe("calculateDeferrals", () => {
           id: "bill-3",
           timestamp: new Date("2026-04-15"),
           label: "Bill 3",
-          amount: -50,
-          headroom: 100,
+          amount: -5000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -75,
-          headroom: 100,
+          amount: -7500,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-10"),
           label: "Bill 2",
-          amount: -60,
-          headroom: 100,
+          amount: -6000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -250 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -25000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // Bills should be processed in timestamp order: bill-1, bill-2, bill-3
       expect(result?.actions).toHaveLength(3);
       expect(result?.actions[0].id).toBe("bill-1");
@@ -807,33 +807,33 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -50,
-          headroom: 100,
+          amount: -5000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -80,
-          headroom: 100,
+          amount: -8000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-3",
           timestamp: new Date("2026-04-10"),
           label: "Bill 3",
-          amount: -40,
-          headroom: 100,
+          amount: -4000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 350, // enough for all three: 50+80+40=170
+          amount: 100000,
+          headroom: 35000, // enough for all three: 50+80+40=170
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -100 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -10000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = 100 + 50 = 150
       // All bills total 170, which is > 150, so should resolve
       expect(result?.actions.length).toBeGreaterThanOrEqual(1);
@@ -848,33 +848,33 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -100,
-          headroom: 100,
+          amount: -10000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -80,
-          headroom: 100,
+          amount: -8000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-3",
           timestamp: new Date("2026-04-10"),
           label: "Bill 3",
-          amount: -30,
-          headroom: 100,
+          amount: -3000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 250, // enough for all bills
+          amount: 100000,
+          headroom: 25000, // enough for all bills
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -150 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -15000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = 150 + 50 = 200
       // After bill-1 (100): remainingGap = 100, landing headroom = 150
       // After bill-2 (80): remainingGap = 20, landing headroom = 70
@@ -889,26 +889,26 @@ describe("calculateDeferrals", () => {
           id: "bill-1",
           timestamp: new Date("2026-04-01"),
           label: "Bill 1",
-          amount: -50,
-          headroom: 100,
+          amount: -5000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-2",
           timestamp: new Date("2026-04-05"),
           label: "Bill 2",
-          amount: -60,
-          headroom: 100,
+          amount: -6000,
+          headroom: 10000,
         }),
         buildTimelineEvent({
           id: "landing",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
-          amount: 1000,
-          headroom: 300,
+          amount: 100000,
+          headroom: 30000,
         }),
       ];
-      const relief = buildRelief({ predictedBalance: -50 });
-      const result = calculateDeferrals(timeline, relief, 50);
+      const relief = buildRelief({ predictedBalance: -5000 });
+      const result = calculateDeferrals(timeline, relief, 5000);
       // remainingGap = 50 + 50 = 100
       // Both bills (50 + 60 = 110) deferred, remainingGap becomes negative
       expect(result?.actions).toHaveLength(2);
@@ -924,54 +924,54 @@ describe("calculateDeferrals", () => {
           timestamp: new Date("2026-03-25"),
           type: "baseline",
           label: "Starting Balance",
-          amount: -1000,
-          headroom: 100,
+          amount: -100000,
+          headroom: 10000,
         }),
         buildBill({
           id: "bill-rent",
           timestamp: new Date("2026-04-01"),
           label: "Rent",
-          amount: -600,
-          headroom: 50,
+          amount: -60000,
+          headroom: 5000,
         }),
         buildBill({
           id: "bill-utilities",
           timestamp: new Date("2026-04-10"),
           label: "Utilities",
-          amount: -150,
-          headroom: 80,
+          amount: -15000,
+          headroom: 8000,
         }),
         buildTimelineEvent({
           id: "income-1",
           timestamp: new Date("2026-04-15"),
           type: "inflow",
           label: "Salary (Partial)",
-          amount: 500,
-          headroom: 200,
+          amount: 50000,
+          headroom: 20000,
         }),
         buildBill({
           id: "bill-phone",
           timestamp: new Date("2026-04-20"),
           label: "Phone Bill",
-          amount: -80,
-          headroom: 120,
+          amount: -8000,
+          headroom: 12000,
         }),
         buildTimelineEvent({
           id: "income-2",
           timestamp: new Date("2026-05-01"),
           type: "inflow",
           label: "Full Salary",
-          amount: 2000,
-          headroom: 800,
+          amount: 200000,
+          headroom: 80000,
         }),
       ];
 
       // Large negative balance indicating insolvency
       const relief = buildRelief({
-        predictedBalance: -1050,
+        predictedBalance: -105000,
         isFullyResolved: false,
       });
-      const result = calculateDeferrals(timeline, relief, 100);
+      const result = calculateDeferrals(timeline, relief, 10000);
 
       // Verify result structure
       expect(result).not.toBeNull();
@@ -1010,27 +1010,27 @@ describe("calculateDeferrals", () => {
       buildBill({
         id: "early-bill",
         timestamp: new Date("2026-04-01"),
-        amount: -100,
+        amount: -10000,
       }), // Eligible
       buildBill({
         id: "late-bill",
         timestamp: new Date("2026-04-10"),
-        amount: -100,
+        amount: -10000,
       }), // NOT Eligible
       buildTimelineEvent({
         id: "landing",
         timestamp: new Date("2026-05-01"),
-        headroom: 500,
+        headroom: 50000,
       }),
     ];
 
     // The crisis happens on April 5th
     const relief = buildRelief({
-      predictedBalance: -150,
+      predictedBalance: -15000,
       minBalanceDate: new Date("2026-04-05"),
     });
 
-    const result = calculateDeferrals(timeline, relief, 50);
+    const result = calculateDeferrals(timeline, relief, 5000);
 
     expect(result?.actions).toHaveLength(1);
     expect(result?.actions[0].id).toBe("early-bill");

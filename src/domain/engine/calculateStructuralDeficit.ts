@@ -88,13 +88,12 @@ export function calculateStructuralDeficit(
   const isTerminal: boolean = resolutionDate === null;
 
   //count the number of days under buffer
-  const bufferInCents: number = Math.round(buffer * 100);
   const daysUnderBuffer: number = timeline.filter(
-    (e) => Math.round(e.runningBalance * 100) < bufferInCents,
+    (e) => e.runningBalance < buffer,
   ).length;
 
   const structuralDeficit: StructuralDeficit = {
-    shortfall: Math.max(0, Math.round(remainingShortfall * 100) / 100),
+    shortfall: Math.max(0, remainingShortfall),
     criticalDate: criticalDate,
     resolutionDate: resolutionDate,
     daysUnderBuffer: daysUnderBuffer,
