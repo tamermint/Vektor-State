@@ -38,10 +38,13 @@ Comprehension check for the owner (answer before merging):
 | ☐ | A test exists that **fails without this change** |
 | ☐ | No existing test weakened, skipped or deleted; expected-value changes are in their own commit, with a reason |
 | ☐ | `src/domain/**` stays pure: no Prisma, `services/`, `app/`, env, network, or `new Date()` |
-| ☐ | Money is integer cents; no `* 100 / 100` rounding; rounding follows Appendix F §F6 |
-| ☐ | Dates are UTC-midnight calendar dates; routes use `sydneyToday()` |
+| ☐ | Money is integer cents (`parseCents`, never `parseFloat`); no `* 100 / 100` rounding; rounding follows Appendix F §F5 |
+| ☐ | Dates are UTC-midnight Sydney calendar dates; routes use `sydneyToday()`; feed timestamps use `epochToSydneyDate()` |
 | ☐ | Append-only models are only inserted into |
 | ☐ | LLM output never computes numbers or reaches a command route; recommendations pass `numberGuard` |
+| ☐ | Imported data reconciles (`reconcile.ts`); PDF-extracted rows need the user's confirmation before import |
+| ☐ | No SimpleFIN access URL, encryption key or raw statement in logs, client responses or LLM prompts |
+| ☐ | Nothing from the deferred list (spec §21): no personal inflation, macro data, scanners or `/api/mcp` |
 | ☐ | No new dependencies, env vars or models without owner approval |
 | ☐ | No Red/Amber files touched without a `BUILD:` grant |
 | ☐ | CI green: lint, typecheck, test, build |

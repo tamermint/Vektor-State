@@ -1,177 +1,115 @@
-# Vektor-State: External Data Sources Specification
+# Safe-to-Splurge: External Data Sources Specification
 
 | | |
 |---|---|
-| **Doc ID** | STS-DATA-SOURCES |
-| **Applies to** | Milestone M0+ (Data Ingestion & Macro Service) |
-| **Read with** | `docs/PILOT_V1_REPO_MAP.md`, `docs/PILOT_V1_SPEC.md` (§10.2, §11) |
-| **Status** | Verified & Ingestion-Ready |
+| **Doc ID** | STS-DATA-SOURCES, revision 2 |
+| **Applies to** | Pilot v1 (Statement Ingestion, Feed Adapters & AI Narration) |
+| **Read with** | `docs/PILOT_V1_REPO_MAP.md`, `docs/PILOT_V1_SPEC.md` (§7, §17), `AGENTS.md` |
+| **Status** | Canonical Ingestion & Data Security Reference |
 
 ---
 
-## 1. Australian Bureau of Statistics (ABS) SDMX REST APIs
+## 1. Overview & Data Boundary Posture
 
-All ABS datasets are queried via keyless, public SDMX 2.1 REST endpoints using `format=csvfilewithlabels` or `format=jsonsdmx`. Responses are parsed in pure TypeScript and cached with `Vintage` metadata (release date, retrieval timestamp, content hash).
+The pilot operates on **direct household cash-flow feeds** only. Personal inflation, macro data (ABS, RBA, NSW rent), and external energy/fuel scanners are **deferred** (spec §21).
 
-### 1.1 Headline Consumer Price Index (CPI)
-* **Dataflow:** `ABS,CPI,2.0.0`
-* **Query Format:** `https://data.api.abs.gov.au/rest/data/ABS,CPI,2.0.0/<MEASURE>.<INDEX_TYPE>.<TSEST>.<REGION>.<FREQ>?startPeriod=2020-Q1&format=csvfilewithlabels`
-* **Canonical Key:** `1.10001.10.50.Q` (Index Number, All Groups CPI, Original, Australia, Quarterly).
-* **Capital City Keys:**
-  * Sydney: `1.10001.10.1.Q`
-  * Melbourne: `1.10001.10.2.Q`
-  * Brisbane: `1.10001.10.3.Q`
-  * Adelaide: `1.10001.10.4.Q`
-  * Perth: `1.10001.10.5.Q`
-  * Hobart: `1.10001.10.6.Q`
-  * Darwin: `1.10001.10.7.Q`
-  * Canberra: `1.10001.10.8.Q`
-* **Monthly CPI Indicator:** `ABS,CPI_M,1.0.0` (Key: `1.10001.10.50.M` for national indicator).
-* **Role in Engine:** Benchmarks headline inflation and provides category price deflators ($\Delta_c$) for goods/services.
-
-### 1.2 Selected Living Cost Indexes (SLCI / LCI)
-* **Dataflow:** `ABS,LCI,1.0.0`
-* **Query Endpoint:** `https://data.api.abs.gov.au/rest/data/ABS,LCI,1.0.0/1.10001.<HH_TYPE>.50.Q?startPeriod=2020-Q1&format=csvfilewithlabels`
-* **Household Type Identifiers (`<HH_TYPE>`):**
-  * `P1`: Employee households (includes mortgage interest charges; aligns with wages personas).
-  * `P2`: Age pensioner households.
-  * `P3`: Other government transfer recipient households (JobSeeker, DSP, Parenting).
-  * `P4`: Self-funded retiree households.
-  * `PBLCI`: Pensioner and beneficiary living cost index.
-* **Role in Engine:** Living-cost benchmark ($\lambda_t$) for "households like yours" and prior weights ($p_c$) for new users without sufficient transaction history.
-
-### 1.3 Wage Price Index (WPI)
-* **Dataflow:** `ABS,WPI,1.2.0`
-* **Query Endpoint:** `https://data.api.abs.gov.au/rest/data/ABS,WPI,1.2.0/1.THRPEB.7.TOT.20.AUS.Q?startPeriod=2020-Q1&format=csvfilewithlabels`
-* **Dimensions:** Total hourly rates of pay excluding bonuses, All sectors (Private & Public), Seasonally Adjusted, Australia, Quarterly.
-* **Role in Engine:** Benchmark for wage-earner income growth ($b_t$). *Never used as an inflation weight or substitute for actual net pay.*
-
-### 1.4 Monthly Household Spending Indicator (MHSI)
-* **Dataflow:** `ABS,MHSI,1.0.0`
-* **Dimensions:** 9 COICOP spending categories, Seasonally Adjusted, Current prices, National & State.
-* **Role in Engine:** Peer spending growth benchmark ($m_{c,s}$). *Exclusively expenditure value/volume; never treated as price inflation.*
+### The Ingestion Security Posture
+* **Zero Credential Storage:** Bank login credentials, passwords, BSBs, full account numbers, TFNs, and government IDs are **never collected or stored**. Accounts store only the provider's opaque account ID and a display name with digits masked (e.g. `Checking ...4201`).
+* **Untrusted Text:** Merchant names and `rawDescription` strings from statements and feeds are treated as untrusted user inputs. They are sanitized, length-clipped (80 characters), stripped of control characters, and presented to LLMs only as `untrusted_*` data.
+* **Reconciliation Gate:** No transaction data from PDF extraction or feeds enters the canonical database without passing deterministic mathematical reconciliation ($B_{\text{start}} + \sum \Delta = B_{\text{end}}$ exact) and user confirmation.
 
 ---
 
-## 2. Reserve Bank of Australia (RBA) Statistical Tables
+## 2. Bank Statement Uploads (CSV & XLSX)
 
-RBA tables are published as standardized CSV files updated following Board meetings and month-end releases.
-
-### 2.1 Table F1: Interest Rates and Yields – Money Market
-* **URL:** `https://www.rba.gov.au/statistics/tables/csv/f01hist.csv`
-* **Target Series:** Cash Rate Target (`FIRMMCRTD`).
-* **Role in Engine:** Macro context indicator and base rate for speculative rate shock scenarios.
-
-### 2.2 Table F4: Retail Deposit and Investment Rates
-* **URL:** `https://www.rba.gov.au/statistics/tables/csv/f04hist.csv`
-* **Target Series:** Banks' retail deposit rates (Online savings accounts, Bonus saver rates, Term deposits).
-* **Role in Engine:** Ingested with vintages; benchmark for reserve yield potential (factual statements only; no product recommendations).
-
-### 2.3 Table F6: Housing Lending Rates
-* **URL:** `https://www.rba.gov.au/statistics/tables/csv/f06hist.csv`
-* **Target Series:**
-  * Outstanding loans — Owner-occupier variable (`FILRHLVO`).
-  * Outstanding loans — Owner-occupier 3-year fixed (`FILRHLF3O`).
-  * Outstanding loans — Investor variable (`FILRHLVI`).
-* **Role in Engine:**
-  * Fallback for user's loan rate 12 months ago if unknown ($\hat{r}_{\ell, t-12} = r_{\ell, t} - \Delta \text{F6}$).
-  * Borrower rate gap benchmark ($\Delta r_\ell = r_\ell - \text{F6}$).
-
----
-
-## 3. NSW Department of Communities and Justice (DCJ) Rent and Sales
-
-* **Source:** NSW DCJ Rent and Sales Report (Quarterly Excel/CSV publication).
-* **Granularity:** Postcode, LGA, dwelling type (Separate House, Flat/Unit, Townhouse), and bedroom count (1, 2, 3, 4+).
-* **Metrics:** Median weekly rent of new bonds lodged with NSW Fair Trading.
-* **Ladder Fallback (Spec §F4.4):**
-  1. Exact Postcode + Dwelling Type + Bedrooms.
-  2. If count < 10 (suppressed), widen to Local Government Area (LGA) (sets flag `rent_benchmark_widened`).
-  3. If still suppressed, widen to Greater Sydney region.
-* **Role in Engine:** New-lease market rent benchmark ($\tilde{R}_q$) for lease renewal evaluations. *Not used for PIR (CPI rents is used for sitting tenants).*
-
----
-
-## 4. Services Australia Reference Payment Rates
-
-Government income support rates are indexed biannually (20 March and 20 September). They are maintained in the append-only `ReferenceRate` table and verified by the operator.
-
-### 4.1 Base Rates (as of March 2026)
-| Payment Type | Recipient Category | Rate per Fortnight (AUD) | Rate in Cents | Indexation Cadence |
-|---|---|---|---|---|
-| `single_jobseeker` | Single, 22+, no children | $771.50 | 77,150 | Mar / Sep (CPI) |
-| `single_age_pension` | Single, full pension (incl. supplements) | $1,116.30 | 111,630 | Mar / Sep (PBLCI/CPI/MTAWE) |
-| `couple_age_pension` | Couple combined (incl. supplements) | $1,682.80 | 168,280 | Mar / Sep (PBLCI/CPI/MTAWE) |
-| `single_parenting_payment` | Single parent, child under 14 | $987.70 | 98,770 | Mar / Sep (CPI) |
-| `single_dsp` | Disability Support Pension, 21+ | $1,116.30 | 111,630 | Mar / Sep (PBLCI/CPI/MTAWE) |
-
-### 4.2 Storage Schema
-```prisma
-model ReferenceRate {
-  id            String   @id @default(uuid())
-  kind          String   // "gov_payment"
-  key           String   // e.g. "single_jobseeker"
-  amountCents   Int
-  effectiveDate DateTime @db.Date
-  sourceUrl     String
-  enteredBy     String
-  verifiedAt    DateTime
-  createdAt     DateTime @default(now())
-
-  @@index([key, effectiveDate])
-}
-```
-
----
-
-## 5. Australian Energy Regulator (AER) Energy Plan Data
-
-* **Source:** AER Consumer Data Right (CDR) Public Reference Data.
-* **Endpoint:** `GET https://api.energymadeeasy.gov.au/cds-au/v1/energy/plans`
-* **Access Model:** Public, unauthenticated API per CDR standards.
-* **Pilot Calculator Scope (S3):**
-  * Single-rate + daily supply charges only.
-  * Controlled load, demand tariffs, and time-of-use tariffs are flagged "not compared".
-  * Formula: $\text{Annual Cost} = (\text{Daily Supply Cents} \times 365) + (\text{Annual kWh} \times \text{Peak Usage Rate Cents/kWh})$.
-
----
-
-## 6. NSW FuelCheck REST API
-
-* **Source:** NSW FuelCheck API (OneGov platform).
-* **Endpoint:** `https://api.onegov.nsw.gov.au/FuelCheckApp/v1/fuel/prices`
-* **Authentication:** API Key (`apikey` header) via NSW OneGov developer portal.
-* **Metrics:** Current station pump prices vs 28-day history (min, 25th percentile, median, 75th percentile, max).
-* **Signals (S4):**
-  * `fill_now`: current price $\le$ 25th percentile.
-  * `wait_if_you_can`: current price $\ge$ 75th percentile.
-  * `neutral`: between 25th and 75th percentiles.
-
----
-
-## 7. Pilot Bank Statement CSV Formats
-
-### 7.1 Canonical Template Format
+### 2.1 Canonical Ingestion Template
+The app provides a downloadable CSV/XLSX template:
 ```csv
 date,amount,description,balance
-2026-10-15,-1200.00,"RENT PAYMENT APARTMENT 4B",4250.50
-2026-10-15,2400.00,"ACME CORP SALARY PAYROLL",5450.50
+2026-10-15,-120.50,"WOOLWORTHS METRO SYDNEY",3450.20
+2026-10-15,2400.00,"ACME CORP SALARY PAYROLL",5850.20
 ```
-* Amounts are parsed directly as integer cents without floating-point conversion (`-1200.00` $\to$ `-120000`).
 
-### 7.2 Native Bank Mappings (Pilot Bank Adapters)
-| Bank | Date Format | Outflow / Inflow Layout | Description Columns | Balance Column |
+* **Amount Parsing:** Amounts are parsed directly as integer cents using `parseCents(str)`, **never** `parseFloat`. Rows with invalid formats or more than 2 decimals are rejected.
+* **Signed Convention:** Negative (`-`) represents outflows/debits; positive (`+`) represents inflows/credits.
+* **Idempotence:** Files are fingerprinted by SHA-256 `fileHash`. Re-uploading an identical statement is an idempotent no-op.
+* **Deduplication:** Overlapping statement periods are deduplicated by `dedupeKey`:
+  $$\text{dedupeKey} = \text{hash}(\text{accountId}, \text{date}, \text{amountCents}, \text{normalizedMerchant}, \text{ordinal})$$
+  Identical same-day transactions receive a monotonic ordinal so genuine duplicate purchases survive.
+
+### 2.2 Pilot Bank CSV Mappings
+M2 ships native adapters with fixtures and golden tests for the pilot participants' banks:
+
+| Bank | Date Format | Debit / Credit Layout | Description Columns | Balance Column |
 |---|---|---|---|---|
-| **Commonwealth Bank (CBA)** | `DD/MM/YYYY` | Single signed `Amount` column | Single `Description` column | `Balance` |
-| **ANZ** | `DD/MM/YYYY` | Separate `Debit` / `Credit` or signed `Amount` | `Description` | Optional `Balance` |
+| **Commonwealth Bank (CBA)** | `DD/MM/YYYY` | Single signed `Amount` column | `Description` | `Balance` |
+| **ANZ** | `DD/MM/YYYY` | Separate `Debit` and `Credit` columns | `Description` | Optional `Balance` |
 | **Macquarie Bank** | `DD/MM/YYYY` | Single signed `Amount` | `Description` + `Category` | `Running Balance` |
-| **Westpac** | `DD/MM/YYYY` | Separate `Debit` and `Credit` | `Narrative` | `Balance` |
+| **Westpac** | `DD/MM/YYYY` | Separate `Debit` and `Credit` columns | `Narrative` | `Balance` |
 
 ---
 
-## 8. LLM Provider Terms & Privacy Posture
+## 3. PDF Statement Extraction with Reconciliation
+
+PDF statements are extracted via structured LLM extraction (`pdfExtractor.ts`) using Gemini 2.5 Pro. **PDF extraction is the only place LLM output can become data**, strictly subject to two gates:
+
+1. **Deterministic Reconciliation Gate (`reconcile.ts`):**
+   * The PDF must state opening balance $B_{\text{start}}$, closing balance $B_{\text{end}}$, and total debits/credits.
+   * Every extracted transaction is summed:
+     $$B_{\text{start}} + \sum_{i} \text{amountCents}_i = B_{\text{end}}$$
+   * If the sum fails to reconcile to the exact cent, **the entire import is rejected**. No partial or guessed data enters the ledger.
+2. **User Confirmation Gate:**
+   * Reconciled candidate transactions are presented to the user for review.
+   * Transactions enter the `Transaction` table only after explicit user confirmation.
+
+---
+
+## 4. Redbark / SimpleFIN Data Feed Connection
+
+The pilot supports optional live feed sync via Redbark's SimpleFIN Bridge API.
+
+### 4.1 Connection Protocol & Endpoint
+* **Protocol:** HTTPS REST polling on demand at user check-in. (No background daemon or polling queues).
+* **Sync URL Format:** `https://beta-bridge.simplefin.org/simplefin/...`
+* **Feed Schema:** JSON payload containing `accounts` (balances, currency) and `transactions` (id, posted, amount, description, payee).
+
+### 4.2 Credential Protection & Encryption
+* SimpleFIN access URLs are credential-equivalent and grant read access to connected accounts.
+* **Storage:** The access URL is encrypted at rest in the `DataConnection` model (`accessUrlEncrypted`) using **AES-256-GCM** with a 32-byte key (`DATA_CONNECTION_KEY`) managed via [`src/lib/crypto.ts`](src/lib/crypto.ts).
+* **Strict Privacy Rule:** SimpleFIN access URLs, access tokens, and the encryption key are:
+  * **Never** logged.
+  * **Never** returned in client API responses.
+  * **Never** passed to the LLM under any circumstance.
+* **Revocation:** Users can revoke the connection at any time in settings, triggering an immediate delete of the encrypted connection row.
+
+### 4.3 Timestamp & Date Normalization
+* SimpleFIN provides epoch second timestamps for transactions.
+* Feeds are converted to Sydney calendar dates at UTC midnight using [`epochToSydneyDate()`](src/lib/dates.ts):
+  ```typescript
+  // Converted via Intl.DateTimeFormat with timeZone: "Australia/Sydney"
+  const sydneyDate = epochToSydneyDate(txn.posted);
+  ```
+
+---
+
+## 5. Mock Consumer Data Right (CDR) Adapter
+
+* **Interface:** `TransactionSource` (`listAccounts`, `listTransactions`, `getBalances`).
+* **Implementation:** `mockCdrAdapter.ts` replays canned fixture data matching CDR Banking API schemas.
+* **Contract Tests:** Contract test suite verifying identical canonical `Transaction` output across CSV, SimpleFIN, and mock CDR adapters.
+* *(Live CDR via an accredited intermediary is deferred to post-pilot, spec §21).*
+
+---
+
+## 6. LLM Provider Terms & Privacy Posture
 
 * **Provider:** Google Gemini 2.5 Pro via Vercel AI SDK (`@ai-sdk/google`).
-* **Environment Variable:** `AI_GATEWAY_API_KEY`.
-* **Zero-Math Policy:** All numbers passed to the model originate from verified MCP tool outputs (`EngineRun`). The LLM generates natural language commentary and action sequences, which are validated by `numberGuard` before reaching operator review.
-* **Data Sanitization:** Account numbers, BSBs, and customer identifiers are never ingested or transmitted. Transaction descriptions are truncated to 80 characters, sanitized of control characters, and marked as `untrusted_*` data.
+* **Configuration:** Hard-coded `temperature: 0.0`, `topP: 0`, and `topK: 1`.
+* **Roles:**
+  1. Strategic narration of cash-flow health and "Something happened" triage briefings.
+  2. PDF structured statement parsing with reconciliation validation.
+* **Data Retention & Privacy Terms:**
+  * Zero user financial credentials transmitted.
+  * Account numbers and BSBs never ingested.
+  * Narrator prompt receives structured JSON summaries from `tools.ts` with masked account labels.
+  * Commercial API data terms ensure customer prompt and completion data is not used for training Google foundation models.
